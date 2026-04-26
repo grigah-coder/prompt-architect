@@ -6,6 +6,7 @@ export enum InputCategory {
 
 export enum QuestionType {
   TEXT = 'TEXT',
+  TEXTAREA = 'TEXTAREA',
   SELECT = 'SELECT',
   MULTI_SELECT = 'MULTI_SELECT',
   SLIDER = 'SLIDER',

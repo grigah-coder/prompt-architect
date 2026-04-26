@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Copy, Download } from 'lucide-react';
 import { InputCategory, AnswerMap, CompiledPrompt, QuestionType } from '../lib/schema';
@@ -37,12 +37,13 @@ interface Props {
 
 
 export default function StageRenderer({ stage, state, dispatch }: Props) {
+  const [copied, setCopied] = useState(false);
+
   useEffect(() => {
     if (stage === 4 && !state.compiledPrompt && !state.isCompiling) {
       dispatch({ type: 'COMPILE' });
-      const prompt = compilePrompt({ 
-        rawIdea: state.answers['concept'] as string, 
-        answers: state.answers 
+      const prompt = compilePrompt({
+        answers: state.answers
       });
       dispatch({ type: 'SET_COMPILED', prompt });
     }
@@ -55,6 +56,8 @@ export default function StageRenderer({ stage, state, dispatch }: Props) {
   const copyToClipboard = async () => {
     if (state.compiledPrompt) {
       await navigator.clipboard.writeText(state.compiledPrompt.systemPrompt);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -91,6 +94,9 @@ export default function StageRenderer({ stage, state, dispatch }: Props) {
           {visibleQuestions.map((question) => {
             const value = state.answers[question.id];
             switch (question.type) {
+              case QuestionType.TEXT:
+              case QuestionType.TEXTAREA:
+                return <TextInput key={question.id} question={question} value={(value as string) || ''} onChange={(val) => handleAnswerChange(question.id, val)} />;
               case QuestionType.SELECT:
                 return <SelectCard key={question.id} question={question} value={(value as string) || ''} onChange={(val) => handleAnswerChange(question.id, val)} />;
               default:
@@ -133,6 +139,7 @@ export default function StageRenderer({ stage, state, dispatch }: Props) {
             const value = state.answers[question.id];
             switch (question.type) {
               case QuestionType.TEXT:
+              case QuestionType.TEXTAREA:
                 return <TextInput key={question.id} question={question} value={(value as string) || ''} onChange={(val) => handleAnswerChange(question.id, val)} />;
               case QuestionType.SELECT:
                 return <SelectCard key={question.id} question={question} value={(value as string) || ''} onChange={(val) => handleAnswerChange(question.id, val)} />;
@@ -188,12 +195,12 @@ export default function StageRenderer({ stage, state, dispatch }: Props) {
           </div>
         ) : state.compiledPrompt ? (
           <div className="glass-card rounded-2xl p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl text-white">Generated Prompt</h2>
-              <div className="flex space-x-2">
+            <div className="mb-4">
+              <h2 className="text-xl text-white mb-2">Generated Prompt</h2>
+              <div className="flex justify-end space-x-2">
                 <button
                   onClick={copyToClipboard}
-                  className="p-2 bg-slate-700 border border-slate-600 rounded-lg hover:bg-slate-600 text-slate-200 transition-colors"
+                  className={`p-2 rounded-lg transition-colors ${copied ? 'bg-emerald-500 text-white' : 'bg-slate-700 border border-slate-600 hover:bg-slate-600 text-slate-200'}`}
                 >
                   <Copy size={16} />
                 </button>

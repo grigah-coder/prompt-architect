@@ -40,12 +40,22 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ onComplete }) => {
     switch (question.type) {
       case 'TEXT':
         return (
-          <textarea
-            rows={2}
+          <input
+            type="text"
             placeholder={question.placeholder}
             value={(value as string) || ''}
             onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-            className="w-full bg-white/5 border border-white/10 rounded-lg text-white/80 focus:ring-1 focus:ring-violet-400 p-2"
+            className="w-full bg-transparent border-b border-emerald-500 text-white focus:outline-none focus:border-emerald-400 p-2"
+          />
+        );
+      case 'TEXTAREA':
+        return (
+          <textarea
+            rows={4}
+            placeholder={question.placeholder}
+            value={(value as string) || ''}
+            onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+            className="w-full bg-transparent border border-emerald-500 text-white focus:outline-none focus:border-emerald-400 p-2 resize-none"
           />
         );
       case 'SELECT':

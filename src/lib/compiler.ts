@@ -1,5 +1,4 @@
 interface POSInput {
-  rawIdea: string;
   answers: Record<string, string | string[] | number>;
 }
 
@@ -18,17 +17,39 @@ interface CompiledPrompt {
 }
 
 function compilePrompt(input: POSInput): CompiledPrompt {
-  const { rawIdea, answers } = input;
+  const { answers } = input;
 
-  const appType = (answers.app_type as string) || 'web';
-  const infrastructure = (answers.infrastructure as string) || 'serverless';
-  const dataFlow = (answers.data_flow as string) || 'rest';
-  const authStrategy = (answers.auth_strategy as string) || 'jwt';
-  const stateManagement = (answers.state_management as string) || 'zustand';
+  const projectName = (answers.project_name as string) || '';
+  const concept = (answers.concept as string) || '';
+  const persona = (answers.persona as string) || 'Senior Architect';
+  const appType = (answers.app_type as string) || 'Web App';
+  const infrastructureRaw = (answers.infrastructure as string) || 'Serverless';
+  const dataFlowRaw = (answers.data_flow as string) || 'REST';
+  const authRaw = (answers.auth as string) || 'JWT';
+  const stateRaw = (answers.state as string) || 'Zustand';
 
-  const role = 'Senior Full-stack Developer & Software Architect.';
-  const task = 'Build a production-ready application based on the provided specs.';
-  
+  // Normalize keys for switches
+  const infrastructure = infrastructureRaw.toLowerCase().replace(' runtime', '').replace('ized', '');
+  const authStrategy = authRaw.toLowerCase().replace('-based', '').replace('oauth2', 'oauth2');
+
+  // Set role based on persona
+  let role = '';
+  switch (persona) {
+    case 'Senior Architect':
+      role = `Senior software architect specializing in system design, scalability, and technical leadership for complex applications${projectName ? `, specifically building ${projectName}` : ''}.`;
+      break;
+    case 'Security Auditor':
+      role = 'Cybersecurity expert focused on threat modeling, vulnerability assessment, compliance, and robust protection strategies.';
+      break;
+    case 'DevOps Engineer':
+      role = 'Infrastructure specialist in CI/CD automation, cloud deployment, containerization, and operational excellence.';
+      break;
+    default:
+      role = 'Senior Full-stack Developer & Software Architect.';
+  }
+
+
+
   // Performance & Scalability based on Infrastructure
   let performanceScalability = '';
   switch (infrastructure) {
@@ -49,29 +70,54 @@ function compilePrompt(input: POSInput): CompiledPrompt {
   let securityChecklist = '';
   switch (authStrategy) {
     case 'jwt':
-      securityChecklist = 'Implement HTTP-only cookies for token storage, use short-lived access tokens with refresh tokens, validate token signatures and expiration, implement rate limiting on auth endpoints, and use HTTPS exclusively.';
+      securityChecklist = `- Implement HTTP-only cookies for token storage
+- Use short-lived access tokens with refresh tokens
+- Validate token signatures and expiration
+- Implement rate limiting on auth endpoints
+- Use HTTPS exclusively`;
       break;
     case 'oauth2':
-      securityChecklist = 'Use PKCE for public clients, validate state parameters to prevent CSRF, implement proper scope minimization, secure redirect URI validation, and store client secrets securely using environment variables.';
+      securityChecklist = `- Use PKCE for public clients
+- Validate state parameters to prevent CSRF
+- Implement proper scope minimization
+- Secure redirect URI validation
+- Store client secrets securely using environment variables`;
       break;
     case 'session':
-      securityChecklist = 'Use secure, HttpOnly cookies for session IDs, implement CSRF tokens, set proper SameSite cookie attributes, rotate session IDs after login, and implement session expiration and idle timeout.';
+      securityChecklist = `- Use secure, HttpOnly cookies for session IDs
+- Implement CSRF tokens
+- Set proper SameSite cookie attributes
+- Rotate session IDs after login
+- Implement session expiration and idle timeout`;
       break;
     default:
-      securityChecklist = 'Implement input validation, use parameterized queries to prevent SQL injection, set secure HTTP headers, implement CORS policies correctly, and regularly update dependencies.';
+      securityChecklist = `- Implement input validation
+- Use parameterized queries to prevent SQL injection
+- Set secure HTTP headers
+- Implement CORS policies correctly
+- Regularly update dependencies`;
   }
 
-  const specs = `App Type: ${appType}
-Infrastructure: ${infrastructure}
-Data Flow: ${dataFlow}
-Auth Strategy: ${authStrategy}
-State Management: ${stateManagement}`;
+  const technicalChecklists = `### Performance & Scalability
+${performanceScalability}
+
+### Security Checklist
+${securityChecklist}`;
+
+  const techSpecsTable = `| Spec              | Value              |
+|-------------------|--------------------|
+| Project Name      | ${projectName}    |
+| Concept           | ${concept}        |
+| App Type          | ${appType}        |
+| Infrastructure    | ${infrastructureRaw} |
+| Data Flow         | ${dataFlowRaw}    |
+| Auth Strategy     | ${authRaw}        |
+| State Management  | ${stateRaw}       |`;
 
   // Deeply nested folder structure following Domain-Driven Design
-  const deliverables = `Complete application with Domain-Driven Design structure:
-/src
+  const dddStructure = `/src
   /domains
-    /[domain-name]  // e.g., /users, /orders, /products
+    /[domain-name]
       /application    // Use cases, DTOs, application services
       /domain         // Entities, value objects, domain services, aggregates
       /infrastructure // Repositories, external services, database mappers
@@ -85,27 +131,24 @@ State Management: ${stateManagement}`;
   /tests              // Unit, integration, and e2e tests
   /docs               // Documentation`;
 
-  const systemPrompt = `## Role
-${role}
+  const systemPrompt = `## Project Information
+Project Name: ${projectName}
+Project Concept: ${concept}
 
-## Task
-${task}
+## Tech Specs
+${techSpecsTable}
 
-## Specs
-${specs}
+## DDD Folder Structure
+${dddStructure}
 
-## Performance & Scalability
-${performanceScalability}
+## Technical Checklists
+${technicalChecklists}
 
-## Security Checklist
-${securityChecklist}
-
-## Deliverables
-${deliverables}`;
+## Business Logic Snippets`;
 
   const metaJSON = {
     role,
-    context: specs,
+    context: `Project Name: ${projectName}, Concept: ${concept}, App Type: ${appType}, Infrastructure: ${infrastructureRaw}, Data Flow: ${dataFlowRaw}, Auth: ${authRaw}, State: ${stateRaw}`,
     constraints: [],
     style: {
       tone: 'Professional',
