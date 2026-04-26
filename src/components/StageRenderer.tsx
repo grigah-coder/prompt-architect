@@ -43,10 +43,8 @@ export default function StageRenderer({ stage, state, dispatch }: Props) {
   useEffect(() => {
     if (stage === 3 && !state.compiledPrompt && !state.isCompiling) {
       dispatch({ type: 'COMPILE' });
-      setTimeout(() => {
-        const prompt = compilePrompt(state.answers, QUESTIONS);
-        dispatch({ type: 'SET_COMPILED', prompt });
-      }, 600);
+      const prompt = compilePrompt(state.answers, QUESTIONS);
+      dispatch({ type: 'SET_COMPILED', prompt });
     }
   }, [stage, state.compiledPrompt, state.isCompiling, state.answers, dispatch]);
 
@@ -124,7 +122,7 @@ export default function StageRenderer({ stage, state, dispatch }: Props) {
         </div>
         <button
           onClick={() => dispatch({ type: 'NEXT_STAGE' })}
-          className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white px-8 py-3 rounded-xl"
+          className="bg-linear-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white px-8 py-3 rounded-xl"
         >
           Next
         </button>
@@ -148,7 +146,7 @@ export default function StageRenderer({ stage, state, dispatch }: Props) {
         <div className="mb-6">
           <div className="w-full bg-white/10 h-2 rounded-full mb-2">
             <div
-              className="bg-gradient-to-r from-purple-600 to-blue-600 h-2 rounded-full transition-all duration-300"
+              className="bg-linear-to-r from-purple-600 to-blue-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -204,7 +202,7 @@ export default function StageRenderer({ stage, state, dispatch }: Props) {
           </button>
           <button
             onClick={() => dispatch({ type: 'NEXT_STAGE' })}
-            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white px-8 py-3 rounded-xl"
+            className="bg-linear-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white px-8 py-3 rounded-xl"
           >
             Next
           </button>
