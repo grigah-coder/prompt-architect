@@ -16,6 +16,7 @@ export type QuestionOption = {
   value: string;
   label: string;
   icon?: string;
+  description?: string;
 };
 
 export type Question = {
@@ -37,9 +38,9 @@ export type Question = {
 export type AnswerMap = Record<string, string | string[]>;
 
 export type NormalizedInput = {
-  structural: Pick<AnswerMap, 'concept'>;
-  technical: Pick<AnswerMap, 'tech_stack' | 'features'>;
-  behavioral: Pick<AnswerMap, 'ui_style'>;
+  structural: Pick<AnswerMap, 'system_persona' | 'app_type'>;
+  technical: Pick<AnswerMap, 'infrastructure' | 'data_flow' | 'auth_strategy' | 'state_management'>;
+  behavioral: never;
 };
 
 export type CompiledPrompt = {
@@ -59,14 +60,15 @@ export type CompiledPrompt = {
 export function normalizeAnswers(answers: AnswerMap): NormalizedInput {
   return {
     structural: {
-      concept: answers['concept'],
+      system_persona: answers['system_persona'],
+      app_type: answers['app_type'],
     },
     technical: {
-      tech_stack: answers['tech_stack'],
-      features: answers['features'],
+      infrastructure: answers['infrastructure'],
+      data_flow: answers['data_flow'],
+      auth_strategy: answers['auth_strategy'],
+      state_management: answers['state_management'],
     },
-    behavioral: {
-      ui_style: answers['ui_style'],
-    },
+    behavioral: undefined as never,
   };
 }

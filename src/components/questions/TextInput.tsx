@@ -15,7 +15,8 @@ export default function TextInput({ question, value, onChange }: Props) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={question.placeholder}
-        className="w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg text-white/80 focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/30 p-3 resize-none"
+        className="w-full bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg text-white/80 focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30 p-3 resize-none"
+        style={{ fontFamily: "'JetBrains Mono', 'Courier New', monospace" }}
       />
     </div>
   );

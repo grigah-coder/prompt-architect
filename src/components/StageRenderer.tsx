@@ -2,12 +2,13 @@ import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Copy, Download } from 'lucide-react';
 import { InputCategory, AnswerMap, CompiledPrompt, QuestionType } from '../lib/schema';
-import { filterByStage, resolveConditionals, getProgress, QUESTIONS } from '../lib/questions';
+import { filterByStage, resolveConditionals, QUESTIONS } from '../lib/questions';
 import { compilePrompt } from '../lib/compiler';
 import TextInput from './questions/TextInput';
 import SelectCard from './questions/SelectCard';
 import MultiSelectGrid from './questions/MultiSelectGrid';
 import ToggleSwitch from './questions/ToggleSwitch';
+import StepProgressBar from './StepProgressBar';
 
 type State = {
   currentStage: 1 | 2 | 3 | 4;
@@ -39,7 +40,10 @@ export default function StageRenderer({ stage, state, dispatch }: Props) {
   useEffect(() => {
     if (stage === 4 && !state.compiledPrompt && !state.isCompiling) {
       dispatch({ type: 'COMPILE' });
-      const prompt = compilePrompt({ rawIdea: state.answers['concept'] as string, answers: state.answers });
+      const prompt = compilePrompt({ 
+        rawIdea: state.answers['concept'] as string, 
+        answers: state.answers 
+      });
       dispatch({ type: 'SET_COMPILED', prompt });
     }
   }, [stage, state.compiledPrompt, state.isCompiling, state.answers, dispatch]);
@@ -67,25 +71,36 @@ export default function StageRenderer({ stage, state, dispatch }: Props) {
   };
 
   if (stage === 1) {
-    const conceptValue = (state.answers['concept'] as string) || '';
-    const question = filterByStage(QUESTIONS, 1)[0];
+    const questions = filterByStage(QUESTIONS, 1);
+    const visibleQuestions = resolveConditionals(questions, state.answers);
+    const totalQuestions = QUESTIONS.length;
+    const answeredQuestions = Object.keys(state.answers).filter(key => {
+      const answer = state.answers[key];
+      return Array.isArray(answer) ? answer.length > 0 : answer && answer.trim() !== '';
+    }).length;
+    const questionsLeft = totalQuestions - answeredQuestions;
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
       >
-        <h1 className="text-3xl font-bold text-white mb-8">Concept</h1>
-        <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl p-6 mb-6">
-          <TextInput
-            question={question}
-            value={conceptValue}
-            onChange={(value) => handleAnswerChange('concept', value)}
-          />
+        <StepProgressBar currentStage={stage} questionsLeft={questionsLeft} />
+        <h1 className="text-3xl font-bold text-white mb-8">System Persona</h1>
+        <div className="glass-card rounded-2xl p-6 mb-6">
+          {visibleQuestions.map((question) => {
+            const value = state.answers[question.id];
+            switch (question.type) {
+              case QuestionType.SELECT:
+                return <SelectCard key={question.id} question={question} value={(value as string) || ''} onChange={(val) => handleAnswerChange(question.id, val)} />;
+              default:
+                return null;
+            }
+          })}
         </div>
         <button
           onClick={() => dispatch({ type: 'NEXT_STAGE' })}
-          className="bg-linear-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white px-8 py-3 rounded-xl"
+          className="btn-accent text-white px-8 py-3 rounded-xl hover:opacity-90 transition-opacity"
         >
           Next
         </button>
@@ -96,7 +111,12 @@ export default function StageRenderer({ stage, state, dispatch }: Props) {
   if (stage >= 2 && stage <= 4 && !(stage === 4 && state.compiledPrompt)) {
     const questions = filterByStage(QUESTIONS, stage);
     const visibleQuestions = resolveConditionals(questions, state.answers);
-    const progress = getProgress(state.answers, QUESTIONS);
+    const totalQuestions = QUESTIONS.length;
+    const answeredQuestions = Object.keys(state.answers).filter(key => {
+      const answer = state.answers[key];
+      return Array.isArray(answer) ? answer.length > 0 : answer && answer.trim() !== '';
+    }).length;
+    const questionsLeft = totalQuestions - answeredQuestions;
 
     return (
       <motion.div
@@ -104,19 +124,11 @@ export default function StageRenderer({ stage, state, dispatch }: Props) {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
       >
+        <StepProgressBar currentStage={stage} questionsLeft={questionsLeft} />
         <h1 className="text-3xl font-bold text-white mb-8">
-          {stage === 2 ? 'Tech Stack' : stage === 3 ? 'UI Style' : 'Features'}
+          {stage === 2 ? 'App Type' : stage === 3 ? 'Infrastructure' : 'Technical Details'}
         </h1>
-        <div className="mb-6">
-          <div className="w-full bg-slate-700 h-2 rounded-full mb-2">
-            <div
-              className="bg-indigo-500 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <p className="text-white/60 text-sm">{Math.round(progress)}% Complete</p>
-        </div>
-        <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl p-6">
+        <div className="glass-card rounded-2xl p-6">
           {visibleQuestions.map((question) => {
             const value = state.answers[question.id];
             switch (question.type) {
@@ -152,15 +164,22 @@ export default function StageRenderer({ stage, state, dispatch }: Props) {
   }
 
   if (stage === 4 && state.compiledPrompt) {
+    const totalQuestions = QUESTIONS.length;
+    const answeredQuestions = Object.keys(state.answers).filter(key => {
+      const answer = state.answers[key];
+      return Array.isArray(answer) ? answer.length > 0 : answer && answer.trim() !== '';
+    }).length;
+    const questionsLeft = totalQuestions - answeredQuestions;
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
       >
+        <StepProgressBar currentStage={4} questionsLeft={questionsLeft} />
         <h1 className="text-3xl font-bold text-white mb-8">Technical Blueprint</h1>
         {state.isCompiling ? (
-          <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl p-6">
+          <div className="glass-card rounded-2xl p-6">
             <div className="space-y-3">
               <div className="h-4 bg-white/10 rounded animate-pulse" />
               <div className="h-4 bg-white/10 rounded animate-pulse w-3/4" />
@@ -168,7 +187,7 @@ export default function StageRenderer({ stage, state, dispatch }: Props) {
             </div>
           </div>
         ) : state.compiledPrompt ? (
-          <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl p-6">
+          <div className="glass-card rounded-2xl p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl text-white">Generated Prompt</h2>
               <div className="flex space-x-2">

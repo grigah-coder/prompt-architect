@@ -17,7 +17,7 @@ export default function SelectCard({ question, value, onChange }: Props) {
             onClick={() => onChange(option.value)}
             className={`p-3 rounded-lg border text-left transition-all ${
               value === option.value
-                ? 'bg-white/15 border-white/30 ring-1 ring-purple-500/50 text-white'
+                ? 'bg-white/15 border-white/30 ring-1 ring-emerald-500/50 text-white'
                 : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10'
             }`}
           >

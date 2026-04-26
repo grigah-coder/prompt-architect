@@ -5,60 +5,93 @@ export type { Question, InputCategory, QuestionType, AnswerMap } from './schema'
 export const QUESTIONS: Question[] = [
   // STRUCTURAL category (stage 1)
   {
-    id: 'concept',
+    id: 'system_persona',
     category: InputCategory.STRUCTURAL,
     stage: 1,
-    label: 'What is the main goal/problem the app solves?',
-    placeholder: 'e.g., A task management tool for teams',
-    type: QuestionType.TEXT,
+    label: 'System Persona',
+    type: QuestionType.SELECT,
+    options: [
+      { value: 'architect', label: 'Architect', description: 'Senior software architect specializing in system design, scalability, and technical leadership for complex applications.' },
+      { value: 'security', label: 'Security', description: 'Cybersecurity expert focused on threat modeling, vulnerability assessment, compliance, and robust protection strategies.' },
+      { value: 'devops', label: 'DevOps', description: 'Infrastructure specialist in CI/CD automation, cloud deployment, containerization, and operational excellence.' },
+    ],
     required: true,
     weight: 1.0,
   },
-  // TECHNICAL category (stage 2)
+  // STRUCTURAL category (stage 2)
   {
-    id: 'tech_stack',
-    category: InputCategory.TECHNICAL,
+    id: 'app_type',
+    category: InputCategory.STRUCTURAL,
     stage: 2,
-    label: 'Preferred technology stack',
+    label: 'App Type',
     type: QuestionType.SELECT,
     options: [
-      { value: 'nextjs', label: 'Next.js' },
-      { value: 'react', label: 'React' },
-      { value: 'mobile', label: 'Mobile' },
-      { value: 'python', label: 'Python' },
+      { value: 'web', label: 'Web', description: 'Browser-based application with responsive design, accessible from any device with a modern web browser.' },
+      { value: 'mobile', label: 'Mobile', description: 'Native mobile experience for iOS and Android with offline capabilities and device-specific features.' },
+      { value: 'desktop', label: 'Desktop', description: 'Cross-platform desktop application with native performance and deep system integration.' },
+    ],
+    required: true,
+    weight: 0.95,
+  },
+  // TECHNICAL category (stage 3)
+  {
+    id: 'infrastructure',
+    category: InputCategory.TECHNICAL,
+    stage: 3,
+    label: 'Infrastructure',
+    type: QuestionType.SELECT,
+    options: [
+      { value: 'serverless', label: 'Serverless', description: 'Fully managed serverless architecture with automatic scaling, pay-per-use pricing, and zero server maintenance.' },
+      { value: 'docker', label: 'Docker', description: 'Containerized deployment with consistent environments across development, staging, and production.' },
+      { value: 'edge', label: 'Edge', description: 'Edge computing with global distribution, ultra-low latency, and intelligent routing for optimal performance.' },
     ],
     required: true,
     weight: 0.9,
   },
-  // BEHAVIORAL category (stage 3)
+  // TECHNICAL category (stage 4)
   {
-    id: 'ui_style',
-    category: InputCategory.BEHAVIORAL,
-    stage: 3,
-    label: 'Design system and theme',
+    id: 'data_flow',
+    category: InputCategory.TECHNICAL,
+    stage: 4,
+    label: 'Data Flow',
     type: QuestionType.SELECT,
     options: [
-      { value: 'tailwind', label: 'Tailwind' },
-      { value: 'modern', label: 'Modern' },
-      { value: 'minimalist', label: 'Minimalist' },
+      { value: 'rest', label: 'REST', description: 'Standard RESTful API with stateless communication, resource-based endpoints, and HTTP method semantics.' },
+      { value: 'graphql', label: 'GraphQL', description: 'Flexible query language allowing clients to request exactly the data they need with a single endpoint.' },
+      { value: 'websockets', label: 'WebSockets', description: 'Real-time bidirectional communication for live updates, chat, and collaborative features.' },
+    ],
+    required: true,
+    weight: 0.85,
+  },
+  // TECHNICAL category (stage 4)
+  {
+    id: 'auth_strategy',
+    category: InputCategory.TECHNICAL,
+    stage: 4,
+    label: 'Auth Strategy',
+    type: QuestionType.SELECT,
+    options: [
+      { value: 'jwt', label: 'JWT', description: 'Stateless JSON Web Tokens with secure claims, refresh tokens, and cryptographic signature validation.' },
+      { value: 'oauth2', label: 'OAuth2', description: 'Industry-standard authorization protocol for third-party integrations and social login capabilities.' },
+      { value: 'session', label: 'Session', description: 'Server-side session management with secure cookies, CSRF protection, and centralized state.' },
     ],
     required: true,
     weight: 0.8,
   },
   // TECHNICAL category (stage 4)
   {
-    id: 'features',
+    id: 'state_management',
     category: InputCategory.TECHNICAL,
     stage: 4,
-    label: 'Required features',
-    type: QuestionType.MULTI_SELECT,
+    label: 'State Management',
+    type: QuestionType.SELECT,
     options: [
-      { value: 'auth', label: 'Auth' },
-      { value: 'database', label: 'Database' },
-      { value: 'api', label: 'API' },
+      { value: 'zustand', label: 'Zustand', description: 'Lightweight, fast state management with minimal boilerplate and excellent TypeScript support.' },
+      { value: 'redux', label: 'Redux', description: 'Predictable state container with powerful devtools, middleware support, and time-travel debugging.' },
+      { value: 'context', label: 'Context', description: 'Built-in React Context API for simple state sharing without external dependencies.' },
     ],
     required: true,
-    weight: 0.7,
+    weight: 0.75,
   },
 ];
 

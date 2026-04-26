@@ -1,115 +1,81 @@
-import { NormalizedInput, CompiledPrompt, normalizeAnswers, InputCategory, AnswerMap } from './schema';
+import { NormalizedInput, CompiledPrompt, normalizeAnswers, AnswerMap } from './schema';
 
-export function inferPersona(domain: string, goal: string): string {
-  if (domain === 'software' && /code|build|debug/i.test(goal ?? '')) {
-    return 'You are a Senior Software Engineer and Technical Architect with 15+ years of experience in full-stack development, system design, and debugging complex applications.';
-  } else if (domain === 'education') {
-    return 'You are an expert Pedagogical Designer and Subject Matter Expert with extensive experience in curriculum development and educational technology.';
-  } else if (domain === 'marketing') {
-    return 'You are a world-class Copywriter and Brand Strategist with a proven track record in crafting compelling narratives and marketing campaigns.';
-  } else if (domain === 'data') {
-    return 'You are a Lead Data Scientist and ML Engineer specializing in advanced analytics, machine learning models, and data-driven insights.';
-  } else if (domain === 'creative') {
-    return 'You are an award-winning Creative Director and Narrative Designer known for innovative storytelling and multimedia experiences.';
-  } else if (domain === 'legal') {
-    return 'You are a meticulous Legal Research Assistant with deep knowledge in legal frameworks, compliance, and regulatory requirements.';
+export function inferPersona(persona: string): string {
+  if (persona === 'Senior Architect') {
+    return 'You are a Senior Software Architect and Technical Lead with 15+ years of experience in full-stack development, system design, architecture patterns, and mentoring development teams.';
+  } else if (persona === 'Security Auditor') {
+    return 'You are a Senior Security Auditor and Cybersecurity Expert with extensive experience in vulnerability assessment, security best practices, compliance frameworks, and protecting applications from threats.';
+  } else if (persona === 'DevOps Engineer') {
+    return 'You are a Senior DevOps Engineer specializing in infrastructure automation, CI/CD pipelines, cloud deployment, monitoring, and scalable system operations.';
   } else {
-    return `You are a highly capable AI assistant specialized in ${goal || 'general tasks'}.`;
+    return 'You are a highly capable AI assistant specialized in software development and architecture.';
   }
 }
 
 export function buildContextBlock(input: NormalizedInput): string {
-  const goal = input.structural.goal ?? 'Not specified';
-  const audience = input.structural.audience ?? 'General';
-  return `## CONTEXT\n${goal} for ${Array.isArray(audience) ? audience.join(', ') : audience}`;
+  const goal = input.structural.app_type ?? 'Not specified';
+  const audience = 'General';
+  return `## CONTEXT\n${goal} for ${audience}`;
 }
 
-export function buildOperationalBlock(input: NormalizedInput): string {
-  const style = input.behavioral.style ?? '';
-  let instructions = '';
-  if (style === 'socratic') {
-    instructions = 'Before answering, identify gaps in the request and ask clarifying questions to ensure complete understanding.';
-  } else if (style === 'direct') {
-    instructions = 'Respond immediately without preamble or unnecessary explanations.';
-  } else {
-    instructions = 'Provide clear, structured responses tailored to the request.';
-  }
+export function buildOperationalBlock(): string {
+  const instructions = 'Provide clear, structured responses tailored to the request.';
   return `## OPERATIONAL FRAMEWORK\n${instructions}`;
 }
 
-export function buildConstraintsBlock(input: NormalizedInput): string {
-  const constraints = input.technical.constraints ?? '';
-  const length = input.technical.outputLength ?? '';
-  let lengthText = '';
-  if (length === 'concise') {
-    lengthText = '200 words';
-  } else if (length === 'standard') {
-    lengthText = '200-500 words';
-  } else if (length === 'detailed') {
-    lengthText = '500+ words';
-  } else {
-    lengthText = 'appropriate length';
-  }
-  const language = input.technical.language ?? 'English';
+export function buildConstraintsBlock(): string {
+  const constraints = '';
+  const lengthText = 'appropriate length';
+  const language = 'English';
   return `## HARD CONSTRAINTS\n${constraints}\n- Never fabricate facts\n- Never exceed ${lengthText}\n- Always respond in ${language}`;
 }
 
-export function buildOutputBlock(input: NormalizedInput): string {
-  const format = input.technical.format ?? '';
-  let formatRules = '';
-  if (format === 'markdown') {
-    formatRules = 'Use Markdown formatting for headings, lists, and emphasis.';
-  } else if (format === 'json') {
-    formatRules = 'Output in valid JSON format.';
-  } else if (format === 'plain_text') {
-    formatRules = 'Use plain text without formatting.';
-  } else if (format === 'bullet_list') {
-    formatRules = 'Structure the response as a bullet-point list.';
-  } else if (format === 'step_by_step') {
-    formatRules = 'Provide step-by-step instructions.';
-  } else {
-    formatRules = 'Use appropriate formatting for clarity.';
-  }
+export function buildOutputBlock(): string {
+  const formatRules = 'Use appropriate formatting for clarity.';
   return `## OUTPUT SPECIFICATION\n${formatRules}`;
 }
 
-export function buildFewShotBlock(input: NormalizedInput): string {
-  const examples = input.behavioral.examples;
-  if (examples === 'true') {
-    return '## EXAMPLES\n[Examples would be inserted here based on user input]';
-  }
+export function buildFewShotBlock(): string {
   return '';
 }
 
-export function buildIterationBlock(input: NormalizedInput): string {
-  const iteration = input.behavioral.iterationMode;
-  if (iteration === 'true') {
-    return '## ITERATION PROTOCOL\nIf the request is ambiguous, ask for clarification before providing a full response.';
-  }
+export function buildIterationBlock(): string {
   return '';
+}
+
+export function buildSecurityBlock(): string {
+  return '## SECURITY FOCUS\nPrioritize identifying potential vulnerabilities, implementing security best practices, and ensuring robust protection against common threats throughout the system design.';
 }
 
 export function compilePrompt(answers: AnswerMap): CompiledPrompt {
   const normalized = normalizeAnswers(answers);
-  const persona = inferPersona(normalized.structural.domain as string ?? '', normalized.structural.goal as string ?? '');
+  const goal = normalized.structural.app_type as string ?? '';
+  const personaSelection = normalized.structural.system_persona as string ?? '';
+  const persona = inferPersona(personaSelection);
   const blocks = [
     persona,
     buildContextBlock(normalized),
-    buildOperationalBlock(normalized),
-    buildConstraintsBlock(normalized),
-    buildOutputBlock(normalized),
-    buildFewShotBlock(normalized),
-    buildIterationBlock(normalized),
+    buildOperationalBlock(),
+    buildConstraintsBlock(),
+    buildOutputBlock(),
+    buildFewShotBlock(),
+    buildIterationBlock(),
   ].filter(block => block.trim() !== '');
-  const raw = blocks.join('\n\n---\n\n');
-  const tokenEstimate = Math.ceil(raw.length / 4);
+  if (personaSelection === 'Security Auditor') {
+    blocks.splice(4, 0, buildSecurityBlock()); // insert after constraints
+  }
+  const systemPrompt = blocks.join('\n\n---\n\n');
   return {
-    raw,
-    metadata: {
-      category: InputCategory.TECHNICAL,
-      tokenEstimate,
-      version: '1.0',
+    systemPrompt,
+    metaJSON: {
+      role: persona,
+      context: goal,
+      constraints: [],
+      style: {
+        tone: 'professional',
+        format: ['markdown'],
+        density: 'standard',
+      },
     },
-    generatedAt: new Date().toISOString(),
   };
 }
