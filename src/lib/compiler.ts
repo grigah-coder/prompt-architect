@@ -20,63 +20,38 @@ interface CompiledPrompt {
 function compilePrompt(input: POSInput): CompiledPrompt {
   const { rawIdea, answers } = input;
 
-  // ROLE
-  const projectType = (answers.projectType as string) || 'Web App';
-  const techStack = (answers.techStack as string) || 'modern web technologies';
-  const role = `You are an expert ${projectType} architect specializing in ${techStack}.`;
+  const techStack = (answers.tech_stack as string) || 'Next.js';
+  const uiStyle = (answers.ui_style as string) || 'Tailwind';
+  const features = (answers.features as string[]).join(', ') || 'Auth, Database, API';
 
-  // CONTEXT
-  const targetAudience = (answers.targetAudience as string) || 'general users';
-  const coreEntities = (answers.coreEntities as string) || 'basic entities';
-  const userRoles = (answers.userRoles as string[]).join(', ') || 'User';
-  const context = `Project: ${rawIdea}
-Target Users: ${targetAudience}
-Core Entities: ${coreEntities}
-User Roles: ${userRoles}`;
+  const role = 'Senior Full-stack Developer & Software Architect.';
+  const task = 'Build a production-ready application based on the provided specs.';
+  const specs = `Concept: ${rawIdea}
+Tech Stack: ${techStack}
+UI Style: ${uiStyle}
+Features: ${features}`;
+  const deliverables = 'Full folder structure and file-by-file code.';
 
-  // CONSTRAINTS
-  const constraints: string[] = [];
-  const securityLevel = (answers.securityLevel as number) || 3;
-  constraints.push(`Security level: ${securityLevel}/5`);
-  const scalingTarget = (answers.scalingTarget as string) || 'Prototype';
-  constraints.push(`Scale target: ${scalingTarget}`);
-  const customConstraints = (answers.constraints as string) || '';
-  if (customConstraints.trim()) {
-    constraints.push(customConstraints);
-  }
-  constraints.push(`Never: ${customConstraints || 'break the defined scope'}`);
-
-  const constraintsBullets = constraints.map(c => `- ${c}`).join('\n');
-
-  // STYLE
-  const toneOfOutput = (answers.toneOfOutput as string) || 'Technical';
-  const responseFormat = (answers.responseFormat as string[]) || ['Markdown'];
-  const outputDensity = (answers.outputDensity as string) || 'Balanced';
-  const style = `Tone: ${toneOfOutput}. Format responses using: ${responseFormat.join(', ')}.
-Output density: ${outputDensity}.`;
-
-  // SYSTEM PROMPT
-  const systemPrompt = `## ROLE
+  const systemPrompt = `## Role
 ${role}
 
-## CONTEXT
-${context}
+## Task
+${task}
 
-## CONSTRAINTS
-${constraintsBullets}
+## Specs
+${specs}
 
-## STYLE
-${style}`;
+## Deliverables
+${deliverables}`;
 
-  // META JSON
   const metaJSON = {
     role,
-    context,
-    constraints,
+    context: specs,
+    constraints: [],
     style: {
-      tone: toneOfOutput,
-      format: responseFormat,
-      density: outputDensity,
+      tone: 'Professional',
+      format: ['Markdown'],
+      density: 'Detailed',
     },
   };
 

@@ -1,11 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --glass-bg: rgba(255, 255, 255, 0.05);
-  --glass-border: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --background: #0f172a; /* slate-900 */
+  --foreground: #f1f5f9; /* slate-100 */
+  --accent: #6366f1; /* indigo-500 */
+  --accent-hover: #4f46e5; /* indigo-600 */
+  --glass-bg: rgba(15, 23, 42, 0.8);
+  --glass-border: rgba(99, 102, 241, 0.3);
+  --glass-shadow: 0 8px 32px 0 rgba(99, 102, 241, 0.1);
 }
 
 @theme inline {
@@ -21,28 +23,32 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --glass-bg: rgba(10, 10, 10, 0.3);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+    --background: #0f172a;
+    --foreground: #f1f5f9;
+    --accent: #6366f1;
+    --accent-hover: #4f46e5;
+    --glass-bg: rgba(15, 23, 42, 0.8);
+    --glass-border: rgba(99, 102, 241, 0.3);
+    --glass-shadow: 0 8px 32px 0 rgba(99, 102, 241, 0.1);
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
 }
 
-/* Glassmorphism effect */
+/* Dark Terminal effect */
 .glass-card {
-  @apply bg-white/10 backdrop-blur-lg border border-white/20 shadow-glass-shadow;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .glass-card:hover {
-  @apply bg-white/15 border-white/25 shadow-glass-shadow/120;
+  background: rgba(15, 23, 42, 0.9);
+  border-color: rgba(99, 102, 241, 0.5);
   transform: translateY(-2px);
 }
 
@@ -80,6 +86,60 @@ body {
 .input-focus-effect {
   @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
          focus:border-blue-500 transition-all duration-200;
+}
+
+/* Code Editor styling */
+.code-editor {
+  background: #1e293b; /* slate-800 */
+  border: 1px solid #334155; /* slate-700 */
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.5;
+  color: #e2e8f0; /* slate-200 */
+  overflow-x: auto;
+  position: relative;
+}
+
+.code-editor::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 32px;
+  background: #0f172a; /* slate-900 */
+  border-bottom: 1px solid #334155;
+  border-radius: 8px 8px 0 0;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  font-size: 12px;
+  color: #94a3b8; /* slate-400 */
+  font-family: var(--font-sans);
+}
+
+.code-editor::before {
+  content: 'Technical Blueprint.md';
+}
+
+.code-editor pre {
+  margin: 0;
+  padding: 16px;
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+/* Button accents */
+.btn-accent {
+  background: var(--accent);
+}
+
+.btn-accent:hover {
+  background: var(--accent-hover);
 }
 
 /* Noise overlay */

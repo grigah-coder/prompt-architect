@@ -1,4 +1,4 @@
-import { NormalizedInput, CompiledPrompt, normalizeAnswers, InputCategory, AnswerMap, Question } from './schema';
+import { NormalizedInput, CompiledPrompt, normalizeAnswers, InputCategory, AnswerMap } from './schema';
 
 export function inferPersona(domain: string, goal: string): string {
   if (domain === 'software' && /code|build|debug/i.test(goal ?? '')) {
@@ -89,8 +89,8 @@ export function buildIterationBlock(input: NormalizedInput): string {
   return '';
 }
 
-export function compilePrompt(answers: AnswerMap, questions: Question[]): CompiledPrompt {
-  const normalized = normalizeAnswers(answers, questions);
+export function compilePrompt(answers: AnswerMap): CompiledPrompt {
+  const normalized = normalizeAnswers(answers);
   const persona = inferPersona(normalized.structural.domain as string ?? '', normalized.structural.goal as string ?? '');
   const blocks = [
     persona,

@@ -21,7 +21,7 @@ export type QuestionOption = {
 export type Question = {
   id: string;
   category: InputCategory;
-  stage: 1 | 2 | 3;
+  stage: 1 | 2 | 3 | 4;
   label: string;
   placeholder?: string;
   type: QuestionType;
@@ -37,40 +37,36 @@ export type Question = {
 export type AnswerMap = Record<string, string | string[]>;
 
 export type NormalizedInput = {
-  structural: Pick<AnswerMap, 'goal' | 'audience' | 'tone' | 'domain'>;
-  technical: Pick<AnswerMap, 'format' | 'outputLength' | 'constraints' | 'language'>;
-  behavioral: Pick<AnswerMap, 'style' | 'iterationMode' | 'complexity' | 'examples'>;
+  structural: Pick<AnswerMap, 'concept'>;
+  technical: Pick<AnswerMap, 'tech_stack' | 'features'>;
+  behavioral: Pick<AnswerMap, 'ui_style'>;
 };
 
 export type CompiledPrompt = {
-  raw: string;
-  metadata: {
-    category: InputCategory;
-    tokenEstimate: number;
-    version: string;
+  systemPrompt: string;
+  metaJSON: {
+    role: string;
+    context: string;
+    constraints: string[];
+    style: {
+      tone: string;
+      format: string[];
+      density: string;
+    };
   };
-  generatedAt: string;
 };
 
-export function normalizeAnswers(answers: AnswerMap, questions: Question[]): NormalizedInput {
+export function normalizeAnswers(answers: AnswerMap): NormalizedInput {
   return {
     structural: {
-      goal: answers['project_goal'],
-      audience: answers['target_audience'],
-      tone: answers['tone'],
-      domain: answers['domain'],
+      concept: answers['concept'],
     },
     technical: {
-      format: answers['output_format'],
-      outputLength: answers['output_length'],
-      constraints: answers['hard_constraints'],
-      language: answers['primary_language'],
+      tech_stack: answers['tech_stack'],
+      features: answers['features'],
     },
     behavioral: {
-      style: answers['style_persona'],
-      iterationMode: answers['iteration_mode'],
-      complexity: answers['complexity_level'],
-      examples: answers['few_shot_examples'],
+      ui_style: answers['ui_style'],
     },
   };
 }

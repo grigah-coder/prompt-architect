@@ -6,7 +6,7 @@ import StageRenderer from '../components/StageRenderer';
 import { AnswerMap, InputCategory, CompiledPrompt } from '../lib/schema';
 
 type State = {
-  currentStage: 1 | 2 | 3;
+  currentStage: 1 | 2 | 3 | 4;
   answers: AnswerMap;
   activeCategory: InputCategory | null;
   compiledPrompt: CompiledPrompt | null;
@@ -28,13 +28,13 @@ function reducer(state: State, action: Action): State {
     case 'SET_ANSWER':
       return { ...state, answers: { ...state.answers, [action.id]: action.value } };
     case 'NEXT_STAGE':
-      if (state.currentStage < 3) {
-        return { ...state, currentStage: (state.currentStage + 1) as 1 | 2 | 3 };
+      if (state.currentStage < 4) {
+        return { ...state, currentStage: (state.currentStage + 1) as 1 | 2 | 3 | 4 };
       }
       return state;
     case 'PREV_STAGE':
       if (state.currentStage > 1) {
-        return { ...state, currentStage: (state.currentStage - 1) as 1 | 2 | 3 };
+        return { ...state, currentStage: (state.currentStage - 1) as 1 | 2 | 3 | 4 };
       }
       return state;
     case 'COMPILE':
