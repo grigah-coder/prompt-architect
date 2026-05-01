@@ -1,6 +1,6 @@
 'use client';
 
-import { useReducer } from 'react';
+import { useReducer, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import StageRenderer from '../components/StageRenderer';
 import { AnswerMap, InputCategory, CompiledPrompt } from '../lib/schema';
@@ -63,8 +63,35 @@ const initialState: State = {
 export default function Page() {
   const [state, dispatch] = useReducer(reducer, initialState);
 
+  // Save answers to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('pa_answers', JSON.stringify(state.answers));
+  }, [state.answers]);
+
+  // Load answers from URL session param on mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionParam = urlParams.get('session');
+    if (sessionParam) {
+      try {
+        const answers: AnswerMap = JSON.parse(atob(sessionParam));
+        Object.entries(answers).forEach(([key, value]) => {
+          dispatch({ type: 'SET_ANSWER', id: key, value });
+        });
+      } catch (error) {
+        console.warn('Failed to parse session from URL:', error);
+      }
+    }
+  }, []);
+
+  const shareSession = () => {
+    const encoded = btoa(JSON.stringify(state.answers));
+    const newUrl = `${window.location.pathname}?session=${encoded}`;
+    window.history.replaceState(null, '', newUrl);
+  };
+
   return (
-    <div className="relative min-h-screen bg-black overflow-hidden before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_30%_20%,rgba(147,51,234,0.3),transparent_50%),radial-gradient(circle_at_70%_80%,rgba(30,64,175,0.2),transparent_50%)] before:pointer-events-none">
+    <div className="relative min-h-screen bg-black overflow-hidden mesh-bg before:absolute before:inset-0 before:bg-[radial-gradient(circle_at_30%20_20%,rgba(147,51,234,0.3),transparent_50%),radial-gradient(circle_at_70%20_80%,rgba(30,64,175,0.2),transparent_50%)] before:pointer-events-none">
       <div className="relative z-10 container mx-auto px-4 py-8">
         <AnimatePresence mode="wait">
           <motion.div
@@ -74,7 +101,7 @@ export default function Page() {
             exit={{ opacity: 0, filter: 'blur(8px)', y: -20 }}
             transition={{ duration: 0.4, ease: 'easeOut' }}
           >
-            <StageRenderer stage={state.currentStage} state={state} dispatch={dispatch} />
+            <StageRenderer stage={state.currentStage} state={state} dispatch={dispatch} shareSession={shareSession} />
           </motion.div>
         </AnimatePresence>
       </div>

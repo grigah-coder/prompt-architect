@@ -27,9 +27,10 @@ Most people struggle with AI because their prompts are too vague. **Prompt Archi
 ## 🏗️ Architecture
 
 The app follows a modular structure:
-1.  **Stage 1 (Input):** Captures the core goal.
-2.  **Stage 2 (Diagnostic):** Dynamically filters questions based on categories to refine context.
-3.  **Stage 3 (Compilation):** Injects gathered data into a professional engineering template (Role, Context, Constraints, etc.).
+1.  **Stage 1 (Project Details):** Captures project name, concept, and system persona.
+2.  **Stage 2 (App Type):** Defines the application type (Web, Mobile, Desktop).
+3.  **Stage 3 (Infrastructure):** Specifies infrastructure preferences (Serverless, Dockerized, Edge Runtime).
+4.  **Stage 4 (Technical Details):** Configures technical aspects (Data Flow, Auth, State Management) and generates the prompt.
 
 ## 🚥 Getting Started
 

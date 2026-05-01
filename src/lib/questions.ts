@@ -3,7 +3,6 @@ import { Question, InputCategory, QuestionType, AnswerMap } from './schema';
 export type { Question, InputCategory, QuestionType, AnswerMap } from './schema';
 
 export const QUESTIONS: Question[] = [
-  // STRUCTURAL category (stage 1)
   {
     id: 'project_name',
     category: InputCategory.STRUCTURAL,
@@ -18,27 +17,12 @@ export const QUESTIONS: Question[] = [
     id: 'concept',
     category: InputCategory.STRUCTURAL,
     stage: 1,
-    label: 'Project Concept',
+    label: 'What does your app do?',
     type: QuestionType.TEXTAREA,
-    placeholder: 'What does this app do? (e.g., A platform to book local football pitches)',
+    placeholder: 'e.g., A platform to book local football pitches',
     required: true,
     weight: 1.0,
   },
-  {
-    id: 'persona',
-    category: InputCategory.STRUCTURAL,
-    stage: 1,
-    label: 'Persona',
-    type: QuestionType.SELECT,
-    options: [
-      { value: 'Senior Architect', label: 'Senior Architect' },
-      { value: 'Security Auditor', label: 'Security Auditor' },
-      { value: 'DevOps Engineer', label: 'DevOps Engineer' },
-    ],
-    required: true,
-    weight: 1.0,
-  },
-  // STRUCTURAL category (stage 2)
   {
     id: 'app_type',
     category: InputCategory.STRUCTURAL,
@@ -53,63 +37,79 @@ export const QUESTIONS: Question[] = [
     required: true,
     weight: 0.95,
   },
-  // TECHNICAL category (stage 3)
   {
-    id: 'infrastructure',
+    id: 'user_roles',
     category: InputCategory.TECHNICAL,
-    stage: 3,
-    label: 'Infrastructure',
-    type: QuestionType.SELECT,
-    options: [
-      { value: 'Serverless', label: 'Serverless' },
-      { value: 'Dockerized', label: 'Dockerized' },
-      { value: 'Edge Runtime', label: 'Edge Runtime' },
-    ],
-    required: true,
+    stage: 2,
+    label: 'Who uses your app?',
+    type: QuestionType.TEXT,
+    placeholder: 'e.g. Admin, Customer, Guest',
+    required: false,
     weight: 0.9,
   },
-  // TECHNICAL category (stage 4)
   {
-    id: 'data_flow',
+    id: 'primary_entities',
     category: InputCategory.TECHNICAL,
-    stage: 4,
-    label: 'Data Flow',
-    type: QuestionType.SELECT,
-    options: [
-      { value: 'REST', label: 'REST' },
-      { value: 'GraphQL', label: 'GraphQL' },
-      { value: 'WebSockets', label: 'WebSockets' },
-    ],
-    required: true,
+    stage: 3,
+    label: 'Main things in your app',
+    type: QuestionType.TEXT,
+    placeholder: 'e.g. Product, Order, User',
+    required: false,
     weight: 0.85,
   },
   {
-    id: 'auth',
+    id: 'key_actions',
     category: InputCategory.TECHNICAL,
-    stage: 4,
-    label: 'Auth',
-    type: QuestionType.SELECT,
-    options: [
-      { value: 'JWT', label: 'JWT' },
-      { value: 'OAuth2', label: 'OAuth2' },
-      { value: 'Session-based', label: 'Session-based' },
-    ],
-    required: true,
+    stage: 3,
+    label: 'What can users do?',
+    type: QuestionType.TEXT,
+    placeholder: 'e.g. Browse products, Place order, Track delivery',
+    required: false,
     weight: 0.8,
   },
   {
-    id: 'state',
+    id: 'ui_mood',
     category: InputCategory.TECHNICAL,
-    stage: 4,
-    label: 'State',
+    stage: 3,
+    label: 'App Vibe',
     type: QuestionType.SELECT,
     options: [
-      { value: 'Zustand', label: 'Zustand' },
-      { value: 'Redux', label: 'Redux' },
-      { value: 'TanStack Query', label: 'TanStack Query' },
+      { value: 'Minimal', label: 'Minimal' },
+      { value: 'Bold', label: 'Bold' },
+      { value: 'Playful', label: 'Playful' },
+      { value: 'Corporate', label: 'Corporate' },
     ],
-    required: true,
+    required: false,
     weight: 0.75,
+  },
+  {
+    id: 'color_palette',
+    category: InputCategory.TECHNICAL,
+    stage: 3,
+    label: 'Color Style',
+    type: QuestionType.SELECT,
+    options: [
+      { value: 'Dark', label: 'Dark' },
+      { value: 'Light', label: 'Light' },
+      { value: 'High Contrast', label: 'High Contrast' },
+      { value: 'Pastel', label: 'Pastel' },
+    ],
+    required: false,
+    weight: 0.7,
+  },
+  {
+    id: 'ui_density',
+    category: InputCategory.TECHNICAL,
+    stage: 3,
+    label: 'Layout Feel',
+    type: QuestionType.SELECT,
+    options: [
+      { value: 'Compact', label: 'Compact' },
+      { value: 'Comfortable', label: 'Comfortable' },
+      { value: 'Spacious', label: 'Spacious' },
+    ],
+    required: false,
+    weight: 0.65,
   },
 ];
 
@@ -123,17 +123,7 @@ export function filterByStage(questions: Question[], stage: number): Question[] 
   return questions.filter(q => q.stage === stage);
 }
 
-export function resolveConditionals(questions: Question[], answers: AnswerMap): Question[] {
-  return questions.filter(q => {
-    if (!q.dependsOn) return true;
-    const answer = answers[q.dependsOn.questionId];
-    if (Array.isArray(answer)) {
-      return answer.includes(q.dependsOn.value);
-    } else {
-      return answer === q.dependsOn.value;
-    }
-  });
-}
+
 
 export function getProgress(answers: AnswerMap, questions: Question[]): number {
   const requiredQuestions = questions.filter(q => q.required);

@@ -1,16 +1,12 @@
 export enum InputCategory {
   STRUCTURAL = 'STRUCTURAL',
   TECHNICAL = 'TECHNICAL',
-  BEHAVIORAL = 'BEHAVIORAL',
 }
 
 export enum QuestionType {
   TEXT = 'TEXT',
   TEXTAREA = 'TEXTAREA',
   SELECT = 'SELECT',
-  MULTI_SELECT = 'MULTI_SELECT',
-  SLIDER = 'SLIDER',
-  TOGGLE = 'TOGGLE',
 }
 
 export type QuestionOption = {
@@ -38,11 +34,18 @@ export type Question = {
 
 export type AnswerMap = Record<string, string | string[]>;
 
+// NEW
 export type NormalizedInput = {
-  structural: Pick<AnswerMap, 'system_persona' | 'app_type'>;
-  technical: Pick<AnswerMap, 'infrastructure' | 'data_flow' | 'auth_strategy' | 'state_management'>;
-  behavioral: never;
+  rawIdea: string;
+  system_persona?: string;
+  app_type?: string;
+  infrastructure?: string;
+  data_flow?: string;
+  auth_strategy?: string;
+  state_management?: string;
 };
+
+
 
 export type CompiledPrompt = {
   systemPrompt: string;
@@ -60,16 +63,12 @@ export type CompiledPrompt = {
 
 export function normalizeAnswers(answers: AnswerMap): NormalizedInput {
   return {
-    structural: {
-      system_persona: answers['system_persona'],
-      app_type: answers['app_type'],
-    },
-    technical: {
-      infrastructure: answers['infrastructure'],
-      data_flow: answers['data_flow'],
-      auth_strategy: answers['auth_strategy'],
-      state_management: answers['state_management'],
-    },
-    behavioral: undefined as never,
+    rawIdea: (answers.concept as string) || (answers.project_name as string) || 'Build an application',
+    system_persona: answers.persona as string,
+    app_type: answers.app_type as string,
+    infrastructure: answers.infrastructure as string,
+    data_flow: answers.data_flow as string,
+    auth_strategy: answers.auth as string,
+    state_management: answers.state as string,
   };
 }
