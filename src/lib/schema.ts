@@ -1,6 +1,6 @@
 export enum InputCategory {
   STRUCTURAL = 'STRUCTURAL',
-  TECHNICAL = 'TECHNICAL',
+  DESIGN_VIBE = 'DESIGN_VIBE',
 }
 
 export enum QuestionType {
@@ -19,17 +19,13 @@ export type QuestionOption = {
 export type Question = {
   id: string;
   category: InputCategory;
-  stage: 1 | 2 | 3 | 4;
+  stage: 1 | 2 | 3;
   label: string;
   placeholder?: string;
   type: QuestionType;
   options?: QuestionOption[];
   required: boolean;
   weight: number;
-  dependsOn?: {
-    questionId: string;
-    value: string;
-  };
 };
 
 export type AnswerMap = Record<string, string | string[]>;
@@ -39,10 +35,12 @@ export type NormalizedInput = {
   rawIdea: string;
   system_persona?: string;
   app_type?: string;
-  infrastructure?: string;
-  data_flow?: string;
-  auth_strategy?: string;
-  state_management?: string;
+  app_vibe?: string;
+  color_style?: string;
+  layout_feel?: string;
+  typography_style?: string;
+  interaction_style?: string;
+  visual_hierarchy?: string;
 };
 
 
@@ -66,9 +64,11 @@ export function normalizeAnswers(answers: AnswerMap): NormalizedInput {
     rawIdea: (answers.concept as string) || (answers.project_name as string) || 'Build an application',
     system_persona: answers.persona as string,
     app_type: answers.app_type as string,
-    infrastructure: answers.infrastructure as string,
-    data_flow: answers.data_flow as string,
-    auth_strategy: answers.auth as string,
-    state_management: answers.state as string,
+    app_vibe: answers.ui_mood as string,
+    color_style: answers.color_palette as string,
+    layout_feel: answers.ui_density as string,
+    typography_style: answers.typography_style as string,
+    interaction_style: answers.interaction_style as string,
+    visual_hierarchy: answers.visual_hierarchy as string,
   };
 }

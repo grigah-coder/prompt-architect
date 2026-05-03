@@ -7,9 +7,9 @@ describe('Question filtering functions', () => {
   describe('filterByStage', () => {
     it('should filter questions by stage number', () => {
       expect(filterByStage(QUESTIONS, 1).length).toBe(2); // project_name, concept
-      expect(filterByStage(QUESTIONS, 2).length).toBe(2); // app_type, user_roles
-      expect(filterByStage(QUESTIONS, 3).length).toBe(5); // primary_entities, key_actions, ui_mood, color_palette, ui_density
-      expect(filterByStage(QUESTIONS, 4).length).toBe(0); // output only
+      expect(filterByStage(QUESTIONS, 2).length).toBe(1); // app_type
+      expect(filterByStage(QUESTIONS, 3).length).toBe(3); // app_vibe, color_style, layout_feel
+      expect(filterByStage(QUESTIONS, 4).length).toBe(0); // no questions in stage 4
     });
 
     it('should return empty array for invalid stage', () => {
@@ -20,11 +20,11 @@ describe('Question filtering functions', () => {
   describe('filterByCategory', () => {
     it('should filter questions by category', () => {
       const structural = filterByCategory(QUESTIONS, InputCategory.STRUCTURAL);
-      const technical = filterByCategory(QUESTIONS, InputCategory.TECHNICAL);
+      const designVibe = filterByCategory(QUESTIONS, InputCategory.DESIGN_VIBE);
       expect(structural.length).toBe(3); // project_name, concept, app_type
-      expect(technical.length).toBe(6);  // user_roles, primary_entities, key_actions, ui_mood, color_palette, ui_density
+      expect(designVibe.length).toBe(3); // app_vibe, color_style, layout_feel
       expect(structural.every(q => q.category === InputCategory.STRUCTURAL)).toBe(true);
-      expect(technical.every(q => q.category === InputCategory.TECHNICAL)).toBe(true);
+      expect(designVibe.every(q => q.category === InputCategory.DESIGN_VIBE)).toBe(true);
     });
 
     it('should sort by weight in descending order', () => {
@@ -44,7 +44,11 @@ describe('Question filtering functions', () => {
       expect(partialProgress).toBeGreaterThan(0);
       expect(partialProgress).toBeLessThan(100);
 
-      const allAnswers: AnswerMap = { project_name: 'Test', concept: 'An app', app_type: 'Web App' };
+      const allAnswers: AnswerMap = {
+        project_name: 'Test',
+        concept: 'An app',
+        app_type: 'Web App'
+      };
       expect(getProgress(allAnswers, QUESTIONS)).toBe(100);
     });
 
@@ -52,7 +56,7 @@ describe('Question filtering functions', () => {
       const answers: AnswerMap = {
         project_name: 'Test',
         concept: 'An app',
-        app_type: 'Web App',
+        app_type: 'Web App'
       };
       expect(getProgress(answers, QUESTIONS)).toBe(100);
     });

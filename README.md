@@ -1,51 +1,44 @@
-# 🏛️ Prompt Architect (POS)
+# Simple Prompt Wizard
 
-**The Prompt Operating System (POS)** is a high-fidelity prompt engineering environment. It transforms raw, basic ideas into structured, professional-grade AI system instructions using a multi-stage diagnostic workflow.
+A straightforward tool that helps you create better AI prompts through a simple 3-step process.
 
+## 🚀 What it does
 
+Many people write vague prompts that don't give good AI responses. This wizard asks you a few simple questions about your project and creates a clear, structured prompt that AI systems can understand better.
 
-## 🚀 Overview
+## ✨ Features
 
-Most people struggle with AI because their prompts are too vague. **Prompt Architect** solves this by acting as a bridge between a human idea and an AI's optimal performance. 
+* **3 Simple Steps:** Answer questions about your project one step at a time
+* **Clear Prompts:** Get well-structured prompts that work better with AI
+* **Share Links:** Create shareable links of your answers
+* **Clean Design:** Easy to use interface
 
-### Key Features:
-* **Multi-Stage State Machine:** A seamless transition from Idea → Diagnostic → Final Blueprint.
-* **High-Fidelity Logic:** Uses a structured JSON schema to categorize user constraints (Structural, Technical, Behavioral).
-* **Modern UI:** Built with a **Glassmorphism** aesthetic, featuring backdrop blurs and fluid animations.
-* **TypeScript Core:** Ensures strict data typing and zero-error prompt generation.
+## 🛠️ Built with
 
-## 🛠️ Tech Stack
+* Next.js
+* TypeScript
+* Tailwind CSS
 
-* **Framework:** Next.js 15 (App Router)
-* **Language:** TypeScript (Strict Mode)
-* **Styling:** Tailwind CSS v4 (Canonical classes)
-* **Animations:** Framer Motion (Fade-blur-slide transitions)
-* **State Management:** React Hooks with custom logic.
+## 📋 How it works
 
+1. **Step 1:** Tell us about your project and who you're asking (persona)
+2. **Step 2:** Choose your app type (web, mobile, desktop)
+3. **Step 3:** Set design preferences and get your prompt
 
+## 🚀 Getting Started
 
-## 🏗️ Architecture
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-The app follows a modular structure:
-1.  **Stage 1 (Project Details):** Captures project name, concept, and system persona.
-2.  **Stage 2 (App Type):** Defines the application type (Web, Mobile, Desktop).
-3.  **Stage 3 (Infrastructure):** Specifies infrastructure preferences (Serverless, Dockerized, Edge Runtime).
-4.  **Stage 4 (Technical Details):** Configures technical aspects (Data Flow, Auth, State Management) and generates the prompt.
+2. **Start the app:**
+   ```bash
+   npm run dev
+   ```
 
-## 🚥 Getting Started
+3. **Open your browser** and follow the 3 simple steps to create your prompt.
 
-1.  **Clone the repository:**
-    ```bash
-    git clone [https://github.com/grigah-coder/prompt-architect.git](https://github.com/grigah-coder/prompt-architect.git)
-    ```
-2.  **Install dependencies:**
-    ```bash
-    npm install
-    ```
-3.  **Run the development server:**
-    ```bash
-    npm run dev
-    ```
+## 📄 License
 
-## 📜 License
-MIT License - Created for the next generation of Prompt Engineers.
+MIT License

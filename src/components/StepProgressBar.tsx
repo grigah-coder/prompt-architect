@@ -14,8 +14,7 @@ export default function StepProgressBar({ currentStage, questionsLeft }: StepPro
     switch (stage) {
       case 1: return 'Project Details';
       case 2: return 'App Type';
-      case 3: return 'Infrastructure';
-      case 4: return 'Technical Details';
+      case 3: return 'Visual Identity';
       default: return `Stage ${stage}`;
     }
   };

@@ -20,10 +20,9 @@ describe('normalizeAnswers', () => {
       rawIdea: 'A test application',
       system_persona: 'Senior Architect',
       app_type: 'Web App',
-      infrastructure: 'Serverless',
-      data_flow: 'REST',
-      auth_strategy: 'JWT',
-      state_management: 'Zustand',
+      app_vibe: undefined,
+      color_style: undefined,
+      layout_feel: undefined,
     });
   });
 
@@ -31,15 +30,15 @@ describe('normalizeAnswers', () => {
     const answers: AnswerMap = {
       project_name: 'TestApp',
       persona: 'Senior Architect',
-      infrastructure: 'Serverless',
+      ui_mood: 'Minimal',
     };
 
     const result = normalizeAnswers(answers);
 
     expect(result.system_persona).toBe('Senior Architect');
     expect(result.app_type).toBeUndefined();
-    expect(result.infrastructure).toBe('Serverless');
-    expect(result.data_flow).toBeUndefined();
+    expect(result.app_vibe).toBe('Minimal');
+    expect(result.color_style).toBeUndefined();
   });
 
   it('should handle empty answer map', () => {
