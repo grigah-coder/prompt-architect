@@ -42,7 +42,7 @@ export default function StageRenderer({ stage, state, dispatch, shareSession }: 
   const [showSummaryModal, setShowSummaryModal] = useState(false);
 
   useEffect(() => {
-    if (stage >= 2 && stage <= 3) {
+    if (stage === 4 && !state.compiledPrompt && !state.isCompiling) {
       dispatch({ type: 'COMPILE' });
       const normalized = normalizeAnswers(state.answers);
       const prompt = compilePrompt(normalized);

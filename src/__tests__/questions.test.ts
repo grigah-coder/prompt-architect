@@ -8,8 +8,8 @@ describe('Question filtering functions', () => {
     it('should filter questions by stage number', () => {
       expect(filterByStage(QUESTIONS, 1).length).toBe(2); // project_name, concept
       expect(filterByStage(QUESTIONS, 2).length).toBe(2); // app_type, user_roles
-      expect(filterByStage(QUESTIONS, 3).length).toBe(2); // primary_entities, key_actions
-      expect(filterByStage(QUESTIONS, 4).length).toBe(3); // ui_mood, color_palette, ui_density
+      expect(filterByStage(QUESTIONS, 3).length).toBe(5); // primary_entities, key_actions, ui_mood, color_palette, ui_density
+      expect(filterByStage(QUESTIONS, 4).length).toBe(0); // output only
     });
 
     it('should return empty array for invalid stage', () => {
