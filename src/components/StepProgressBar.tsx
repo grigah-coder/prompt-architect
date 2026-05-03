@@ -22,38 +22,48 @@ export default function StepProgressBar({ currentStage, questionsLeft }: StepPro
   const steps = stages.map(stage => ({ label: getStageLabel(stage), stage }));
 
   return (
-    <div className="mb-8 bg-[#0a0a0a] p-4 rounded-lg">
+    <div className="mb-8 bg-slate-900/50 backdrop-blur-sm border border-slate-700 p-6 rounded-xl">
       <div className="flex items-center justify-between">
         {steps.map((step, index) => (
           <div key={step.stage} className="flex items-center">
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                step.stage <= currentStage
-                  ? 'bg-emerald-500 text-white'
+              className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold font-mono transition-all duration-300 ${
+                step.stage < currentStage
+                  ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25'
+                  : step.stage === currentStage
+                  ? 'bg-emerald-400 text-slate-900 ring-2 ring-emerald-400/50 shadow-lg shadow-emerald-400/30'
                   : 'bg-slate-700 text-slate-400'
               }`}
             >
               {step.stage}
             </div>
             <span
-              className={`ml-2 text-sm ${
-                step.stage <= currentStage ? 'text-white' : 'text-slate-400'
+              className={`ml-3 text-sm font-medium font-mono transition-colors duration-300 ${
+                step.stage < currentStage
+                  ? 'text-emerald-300'
+                  : step.stage === currentStage
+                  ? 'text-emerald-200'
+                  : 'text-slate-400'
               }`}
             >
               {step.label}
             </span>
             {index < steps.length - 1 && (
               <div
-                className={`flex-1 h-1 mx-4 ${
-                  step.stage < currentStage ? 'bg-emerald-500' : 'bg-slate-700'
+                className={`flex-1 h-1 mx-6 rounded-full transition-all duration-300 ${
+                  step.stage < currentStage
+                    ? 'bg-emerald-500 shadow-sm shadow-emerald-500/25'
+                    : step.stage === currentStage
+                    ? 'bg-emerald-400/60'
+                    : 'bg-slate-700'
                 }`}
               />
             )}
           </div>
         ))}
       </div>
-      <p className="text-slate-400 text-sm mt-2">
-        {questionsLeft} questions left
+      <p className="text-slate-400 text-sm mt-4 font-mono">
+        {questionsLeft} questions remaining
       </p>
     </div>
   );

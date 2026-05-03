@@ -4,7 +4,6 @@ import { Copy, Download, Globe, Smartphone, Monitor } from 'lucide-react';
 import { InputCategory, AnswerMap, CompiledPrompt, QuestionType } from '../lib/schema';
 import { filterByStage, QUESTIONS } from '../lib/questions';
 import { compilePrompt } from '../lib/architect';
-import { normalizeAnswers } from '../lib/schema';
 import TextInput from './questions/TextInput';
 import SelectCard from './questions/SelectCard';
 import SelectableCard from './SelectableCard';
@@ -46,8 +45,7 @@ export default function StageRenderer({ stage, state, dispatch, shareSession }: 
   useEffect(() => {
     if (stage === 3 && !state.compiledPrompt && !state.isCompiling) {
       dispatch({ type: 'COMPILE' });
-      const normalized = normalizeAnswers(state.answers);
-      const prompt = compilePrompt(normalized);
+      const prompt = compilePrompt(state.answers);
       dispatch({ type: 'SET_COMPILED', prompt });
     }
   }, [stage, state.compiledPrompt, state.isCompiling, state.answers, dispatch]);
@@ -158,8 +156,7 @@ export default function StageRenderer({ stage, state, dispatch, shareSession }: 
                   shareSession();
                   // Generate prompt and set view to results immediately
                   dispatch({ type: 'COMPILE' });
-                  const normalized = normalizeAnswers(state.answers);
-                  const prompt = compilePrompt(normalized);
+                  const prompt = compilePrompt(state.answers);
                   dispatch({ type: 'SET_COMPILED', prompt });
                   // Update view state to results
                   dispatch({ type: 'SET_VIEW_STATE', viewState: 'results' });
