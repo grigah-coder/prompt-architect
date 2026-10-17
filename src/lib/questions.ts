@@ -1,4 +1,4 @@
-import { Question, WizardStep, InputCategory, QuestionType, AnswerMap, WizardProgress } from './schema';
+import { Question, WizardStep, InputCategory, QuestionType, AnswerMap, WizardProgress, PLATFORM } from './schema';
 import { STEP_TITLES } from './schema';
 
 export type { Question, InputCategory, QuestionType, WizardStep, AnswerMap, WizardProgress } from './schema';
@@ -17,13 +17,13 @@ export const PROJECT_TYPE_KEYWORDS: Record<string, string[]> = {
 export const PLATFORM_KEYWORDS: Record<string, string> = {
   ios: 'iOS',
   android: 'Android',
-  mobile: 'Mobile App',
-  web: 'Web App',
-  browser: 'Web App',
-  desktop: 'Desktop',
-  macos: 'Desktop',
-  windows: 'Desktop',
-  linux: 'Desktop',
+  mobile: PLATFORM.MOBILE,
+  web: PLATFORM.WEB,
+  browser: PLATFORM.WEB,
+  desktop: PLATFORM.DESKTOP,
+  macos: PLATFORM.DESKTOP,
+  windows: PLATFORM.DESKTOP,
+  linux: PLATFORM.DESKTOP,
 };
 
 export const QUESTIONS: Question[] = [
@@ -149,12 +149,12 @@ export const QUESTIONS: Question[] = [
     stage: WizardStep.PLATFORM_SELECTION,
     label: 'Target Platform',
     hint: 'Where people will use your app. Web App is the easiest place to start.',
-    defaultValue: 'Web App',
+    defaultValue: PLATFORM.WEB,
     type: QuestionType.SELECT,
     options: [
-      { value: 'Web App', label: 'Web App', icon: 'Globe', description: 'Browser-based applications accessible from any device', recommended: true },
-      { value: 'Mobile App', label: 'Mobile App', icon: 'Smartphone', description: 'Native mobile applications for iOS and Android' },
-      { value: 'Desktop', label: 'Desktop', icon: 'Monitor', description: 'Desktop software for Windows, macOS, and Linux' },
+      { value: PLATFORM.WEB, label: 'Web App', icon: 'Globe', description: 'Browser-based applications accessible from any device', recommended: true },
+      { value: PLATFORM.MOBILE, label: 'Mobile App', icon: 'Smartphone', description: 'Native mobile applications for iOS and Android' },
+      { value: PLATFORM.DESKTOP, label: 'Desktop', icon: 'Monitor', description: 'Desktop software for Windows, macOS, and Linux' },
     ],
     required: true,
     weight: 1.0,
@@ -308,13 +308,34 @@ export function detectProjectTypes(description: string): string[] {
 
 /**
  * Infers the likely target platform from the project description.
+ *
+ * Matching prefers explicit desktop/web signals over a "mobile" match, so a
+ * description such as "a website for automobile dealers" (which contains the
+ * substring "mobile" inside "automobile") resolves to Web rather than
+ * defaulting to Mobile.
  */
 export function inferPlatform(description: string): string | null {
-  const lower = description.toLowerCase();
+  const lower = String(description ?? '').toLowerCase();
+
   const matches = Object.entries(PLATFORM_KEYWORDS)
-    .filter(([kw]) => lower.includes(kw))
+    .filter(([keyword]) => {
+      if (!lower.includes(keyword)) return false;
+      // Guard "mobile" against false positives like "automobile" while still
+      // matching "mobile app" and "mobile-friendly".
+      if (keyword === 'mobile') {
+        return new RegExp('(^|[^a-z])mobile([^a-z]|$)').test(lower);
+      }
+      return true;
+    })
     .map(([, platform]) => platform);
-  return matches.length > 0 ? matches[0] : null;
+
+  if (matches.length === 0) return null;
+
+  return (
+    matches.find((platform) => platform === PLATFORM.DESKTOP) ??
+    matches.find((platform) => platform === PLATFORM.WEB) ??
+    matches[0]
+  );
 }
 
 /**

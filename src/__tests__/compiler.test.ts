@@ -74,6 +74,71 @@ describe('compilePrompt', () => {
     expect(comfortable.systemPrompt).toContain('Comfortable');
   });
 
+  it('should render mobile layout tokens for a Mobile App platform', () => {
+    const result = compilePrompt({
+      concept: 'Build a fitness app',
+      target_platform: 'Mobile App',
+      layout_feel: 'Comfortable',
+    });
+    const layoutSection = result.systemPrompt
+      .split('### Layout System')[1]
+      .split('### Design Tokens')[0];
+
+    expect(layoutSection).toContain('display: flex');
+    expect(layoutSection).toContain('flex-direction: column');
+    expect(layoutSection).toContain('env(safe-area-inset-top');
+    expect(layoutSection).toContain('env(safe-area-inset-bottom');
+    expect(layoutSection).toContain('max-width: none');
+    expect(layoutSection).toContain('width: 100%');
+    // No desktop-style fixed breakpoints on mobile.
+    expect(layoutSection).not.toMatch(/max-width:\s*\d+px/);
+    expect(layoutSection).not.toContain('max-width: 95vw');
+  });
+
+  it('should render responsive Web layout tokens for a Web platform', () => {
+    const result = compilePrompt({
+      concept: 'Build a site',
+      target_platform: 'Web App',
+      layout_feel: 'Comfortable',
+    });
+    const layoutSection = result.systemPrompt
+      .split('### Layout System')[1]
+      .split('### Design Tokens')[0];
+
+    // Standard responsive web shell with a centered max-width wrapper.
+    expect(layoutSection).toContain('.app-shell {');
+    expect(layoutSection).toContain('.container { max-width: 1280px; margin: 0 auto; padding: 0 24px;');
+    expect(layoutSection).toContain('.component {');
+    expect(layoutSection).toContain('.section {');
+    expect(layoutSection).toContain('@media (max-width: 768px)');
+    // Web must not inherit mobile safe-area/full-width shell rules.
+    expect(layoutSection).not.toContain('safe-area-inset');
+    expect(layoutSection).not.toContain('max-width: none');
+  });
+
+  it('should render desktop window shell tokens for Desktop platforms', () => {
+    const result = compilePrompt({
+      concept: 'Build a desktop tool',
+      target_platform: 'Desktop',
+      layout_feel: 'Spacious',
+    });
+    const layoutSection = result.systemPrompt
+      .split('### Layout System')[1]
+      .split('### Design Tokens')[0];
+
+    expect(layoutSection).toContain('.app-shell {');
+    expect(layoutSection).toContain('height: 100vh');
+    expect(layoutSection).toContain('overflow: hidden');
+    expect(layoutSection).toContain('.titlebar-drag-region {');
+    expect(layoutSection).toContain('-webkit-app-region: drag');
+    expect(layoutSection).toContain('.container {');
+    expect(layoutSection).toContain('.component {');
+    expect(layoutSection).toContain('.section {');
+    expect(layoutSection).toContain('max-width: 1600px');
+    // Desktop must not inherit mobile safe-area rules.
+    expect(layoutSection).not.toContain('safe-area-inset');
+  });
+
   it('should split multiline Core Requirements into separate bullet points', () => {
     const result = compilePrompt({
       concept: 'Build a task app',
@@ -123,6 +188,9 @@ describe('compilePrompt', () => {
     const result = compilePrompt({ concept: 'Build an app', target_platform: 'Web App' });
 
     expect(result.systemPrompt).toContain('### Web-Specific Notes');
+    expect(result.systemPrompt).toContain('**Responsive Design**');
+    expect(result.systemPrompt).toContain('**SEO**');
+    expect(result.systemPrompt).toContain('**Web Accessibility**');
     expect(result.systemPrompt).not.toContain('### Desktop-Specific Notes');
     expect(result.systemPrompt).not.toContain('### Mobile-Specific Notes');
   });
@@ -131,6 +199,10 @@ describe('compilePrompt', () => {
     const result = compilePrompt({ concept: 'Build an app', target_platform: 'Desktop' });
 
     expect(result.systemPrompt).toContain('### Desktop-Specific Notes');
+    expect(result.systemPrompt).toContain('**Window Management**');
+    expect(result.systemPrompt).toContain('**Native Menus**');
+    expect(result.systemPrompt).toContain('**Offline-First Data Storage**');
+    expect(result.systemPrompt).toContain('**System Tray Integration**');
     expect(result.systemPrompt).not.toContain('### Web-Specific Notes');
     expect(result.systemPrompt).not.toContain('### Mobile-Specific Notes');
   });
@@ -144,6 +216,32 @@ describe('compilePrompt', () => {
 
     expect(result.systemPrompt).toContain('### Desktop-Specific Notes');
     expect(result.systemPrompt).not.toContain('### Web-Specific Notes');
+  });
+
+  it('should render standard rules and Desktop notes for a "Desktop App" value', () => {
+    const result = compilePrompt({ concept: 'Build an app', target_platform: 'Desktop App' });
+    const layoutSection = result.systemPrompt
+      .split('### Layout System')[1]
+      .split('### Design Tokens')[0];
+
+    expect(result.systemPrompt).toContain('### Desktop-Specific Notes');
+    expect(result.systemPrompt).not.toContain('safe-area-inset');
+    expect(layoutSection).toContain('height: 100vh');
+    expect(layoutSection).toContain('-webkit-app-region: drag');
+    expect(layoutSection).not.toContain('safe-area-inset');
+  });
+
+  it('should render standard rules and Web notes for a "Web" value', () => {
+    const result = compilePrompt({ concept: 'Build an app', target_platform: 'Web' });
+    const layoutSection = result.systemPrompt
+      .split('### Layout System')[1]
+      .split('### Design Tokens')[0];
+
+    expect(result.systemPrompt).toContain('### Web-Specific Notes');
+    expect(result.systemPrompt).not.toContain('### Desktop-Specific Notes');
+    expect(result.systemPrompt).not.toContain('safe-area-inset');
+    expect(layoutSection).toContain('.container { max-width: 1280px');
+    expect(layoutSection).not.toContain('safe-area-inset');
   });
 
   it('should omit all platform notes cleanly when no platform is selected', () => {
@@ -206,5 +304,61 @@ describe('compilePrompt', () => {
     });
 
     expect(result.systemPrompt).toContain('📱 Mobile Power × Clarity');
+  });
+
+  it('should add Web-focused constraints for a Web platform', () => {
+    const result = compilePrompt({
+      concept: 'Build a site',
+      target_platform: 'Web App',
+    });
+    const constraintsSection = result.systemPrompt
+      .split('### Constraints')[1]
+      .split('### Implementation Requirements')[0];
+
+    expect(constraintsSection).toContain('- Ensure responsive design and proper SEO');
+    expect(constraintsSection).toContain(
+      '- Ensure cross-browser compatibility and SEO best practices',
+    );
+    expect(constraintsSection).not.toContain('Optimize for touch interactions');
+  });
+
+  it('should render a Web Project Signature for a Web platform', () => {
+    const result = compilePrompt({
+      concept: 'Build a site',
+      target_platform: 'Web App',
+      app_vibe: 'Minimal',
+      color_style: 'Dark',
+    });
+
+    expect(result.systemPrompt).toContain('## Project Signature');
+    expect(result.systemPrompt).toContain('🌐 Web Air × Night');
+  });
+
+  it('should add Desktop-focused constraints for a Desktop platform', () => {
+    const result = compilePrompt({
+      concept: 'Build a desktop tool',
+      target_platform: 'Desktop',
+    });
+    const constraintsSection = result.systemPrompt
+      .split('### Constraints')[1]
+      .split('### Implementation Requirements')[0];
+
+    expect(constraintsSection).toContain(
+      '- Optimize for desktop window management, keyboard shortcuts, and native OS conventions',
+    );
+    expect(constraintsSection).not.toContain('Optimize for touch interactions');
+    expect(constraintsSection).not.toContain('cross-browser compatibility');
+  });
+
+  it('should render a Desktop Project Signature for a Desktop platform', () => {
+    const result = compilePrompt({
+      concept: 'Build a desktop tool',
+      target_platform: 'Desktop',
+      app_vibe: 'Playful',
+      color_style: 'Pastel',
+    });
+
+    expect(result.systemPrompt).toContain('## Project Signature');
+    expect(result.systemPrompt).toContain('💻 Desktop Joy × Harmony');
   });
 });

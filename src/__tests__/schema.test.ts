@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeAnswers, AnswerMap } from '../lib/schema';
+import { normalizeAnswers, normalizePlatform, PLATFORM, AnswerMap } from '../lib/schema';
 
 describe('normalizeAnswers', () => {
   it('should normalize a complete answer map', () => {
@@ -76,5 +76,29 @@ describe('normalizeAnswers', () => {
 
     expect(result.system_persona).toBe('Senior Architect');
     expect(result.app_type).toEqual(['Web App', 'Mobile App']);
+  });
+});
+
+describe('normalizePlatform', () => {
+  it('should canonicalize platform variants', () => {
+    expect(normalizePlatform('Web')).toBe(PLATFORM.WEB);
+    expect(normalizePlatform('Web App')).toBe(PLATFORM.WEB);
+    expect(normalizePlatform('Desktop')).toBe(PLATFORM.DESKTOP);
+    expect(normalizePlatform('Desktop App')).toBe(PLATFORM.DESKTOP);
+    expect(normalizePlatform('Mobile')).toBe(PLATFORM.MOBILE);
+    expect(normalizePlatform('Mobile App')).toBe(PLATFORM.MOBILE);
+    expect(normalizePlatform('iOS')).toBe(PLATFORM.MOBILE);
+  });
+
+  it('should return an empty string for missing or placeholder values', () => {
+    expect(normalizePlatform(undefined)).toBe('');
+    expect(normalizePlatform('')).toBe('');
+    expect(normalizePlatform('   ')).toBe('');
+    expect(normalizePlatform('Not specified')).toBe('');
+  });
+
+  it('should not let a mobile mention shadow an explicit desktop/web choice', () => {
+    expect(normalizePlatform('Desktop, also mobile-friendly')).toBe(PLATFORM.DESKTOP);
+    expect(normalizePlatform('Web app with a mobile companion')).toBe(PLATFORM.WEB);
   });
 });

@@ -87,6 +87,42 @@ export type Question = {
 
 export type AnswerMap = Record<string, string | string[]>;
 
+/** Canonical platform identifiers shared by the wizard selector and compiler. */
+export const PLATFORM = {
+  WEB: 'Web App',
+  MOBILE: 'Mobile App',
+  DESKTOP: 'Desktop',
+} as const;
+
+export type Platform = (typeof PLATFORM)[keyof typeof PLATFORM];
+
+// Signals used to recognise each platform. Desktop and web are checked before
+// mobile so an explicit desktop/web choice is never shadowed by a stray
+// "mobile" mention.
+const DESKTOP_SIGNALS = ['desktop', 'macos', 'windows', 'linux', 'electron'];
+const WEB_SIGNALS = ['web', 'browser', 'pwa'];
+const MOBILE_SIGNALS = ['mobile', 'ios', 'android'];
+
+/**
+ * Canonicalizes the many ways a target platform can be expressed ("web",
+ * "Web App", "desktop app", "Desktop", "iOS", ...) into one of the canonical
+ * PLATFORM values. Desktop and web signals win over a stray "mobile" mention so
+ * a web/desktop project can never be misclassified as mobile. Returns '' when
+ * no platform-like value is present.
+ */
+export function normalizePlatform(value: string | string[] | undefined): string {
+  const raw = Array.isArray(value) ? value.join(' ') : String(value ?? '');
+  const text = raw.toLowerCase().trim();
+  if (!text || text === 'not specified') return '';
+
+  const matches = (signals: string[]) => signals.some((signal) => text.includes(signal));
+
+  if (matches(DESKTOP_SIGNALS)) return PLATFORM.DESKTOP;
+  if (matches(WEB_SIGNALS)) return PLATFORM.WEB;
+  if (matches(MOBILE_SIGNALS)) return PLATFORM.MOBILE;
+  return '';
+}
+
 export type WizardProgress = {
   step: WizardStep;
   totalSteps: number;

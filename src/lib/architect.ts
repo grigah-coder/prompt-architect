@@ -1,4 +1,4 @@
-import { CompiledPrompt, AnswerMap, WizardStep } from './schema';
+import { CompiledPrompt, AnswerMap, WizardStep, PLATFORM, normalizePlatform } from './schema';
 
 // Color palette mappings
 const getColorPalette = (colorStyle: string) => {
@@ -80,25 +80,224 @@ const getProjectSignature = (appType?: string, appVibe?: string, colorStyle?: st
   return signature;
 };
 
+// Spacing tokens for the mobile layout, keyed by layout feel.
+const MOBILE_LAYOUT_SPACING: Record<
+  string,
+  { gutter: string; componentGap: string; componentPadding: string; sectionGap: string }
+> = {
+  Compact: { gutter: '8px', componentGap: '4px', componentPadding: '8px', sectionGap: '8px' },
+  Comfortable: { gutter: '16px', componentGap: '16px', componentPadding: '24px', sectionGap: '24px' },
+  Spacious: { gutter: '24px', componentGap: '24px', componentPadding: '32px', sectionGap: '32px' },
+};
+
+/**
+ * Mobile layout tokens: a column-flex shell with full-width containers and
+ * safe-area insets, rather than fixed desktop `max-width` breakpoints. This
+ * keeps content edge-to-edge on phones and clear of notches / home indicators.
+ */
+const getMobileLayoutCSS = (layoutFeel: string): string => {
+  const spacing = MOBILE_LAYOUT_SPACING[layoutFeel] ?? MOBILE_LAYOUT_SPACING.Comfortable;
+
+  return `.app-shell {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100dvh;
+}
+.container {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-right: max(${spacing.gutter}, env(safe-area-inset-right, 0px));
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: max(${spacing.gutter}, env(safe-area-inset-left, 0px));
+}
+.component {
+  width: 100%;
+  margin-bottom: ${spacing.componentGap};
+  padding: ${spacing.componentPadding};
+}
+.section {
+  width: 100%;
+  margin-bottom: ${spacing.sectionGap};
+}`;
+};
+
+// Spacing tokens for the responsive web layout, keyed by layout feel.
+const WEB_LAYOUT_SPACING: Record<
+  string,
+  {
+    containerPad: string;
+    componentGap: string;
+    componentPad: string;
+    sectionGap: string;
+    mobilePad: string;
+    mobileComponentGap: string;
+    mobileComponentPad: string;
+    mobileSectionGap: string;
+  }
+> = {
+  Compact: {
+    containerPad: '16px',
+    componentGap: '8px',
+    componentPad: '12px',
+    sectionGap: '12px',
+    mobilePad: '12px',
+    mobileComponentGap: '8px',
+    mobileComponentPad: '12px',
+    mobileSectionGap: '12px',
+  },
+  Comfortable: {
+    containerPad: '24px',
+    componentGap: '16px',
+    componentPad: '24px',
+    sectionGap: '24px',
+    mobilePad: '16px',
+    mobileComponentGap: '12px',
+    mobileComponentPad: '16px',
+    mobileSectionGap: '16px',
+  },
+  Spacious: {
+    containerPad: '32px',
+    componentGap: '24px',
+    componentPad: '32px',
+    sectionGap: '32px',
+    mobilePad: '16px',
+    mobileComponentGap: '16px',
+    mobileComponentPad: '20px',
+    mobileSectionGap: '20px',
+  },
+};
+
+/**
+ * Responsive web layout tokens: a standard centered container with a desktop
+ * `max-width` wrapper that collapses gracefully on smaller viewports. Used for
+ * Web platforms so they never inherit the mobile safe-area/full-width shell.
+ */
+const getWebLayoutCSS = (layoutFeel: string): string => {
+  const spacing = WEB_LAYOUT_SPACING[layoutFeel] ?? WEB_LAYOUT_SPACING.Comfortable;
+
+  return `.app-shell { display: flex; flex-direction: column; min-height: 100vh; width: 100%; }
+.container { max-width: 1280px; margin: 0 auto; padding: 0 ${spacing.containerPad}; width: 100%; }
+.component { margin-bottom: ${spacing.componentGap}; padding: ${spacing.componentPad}; }
+.section { margin-bottom: ${spacing.sectionGap}; }
+@media (max-width: 768px) {
+  .container { padding: 0 ${spacing.mobilePad}; }
+  .component { margin-bottom: ${spacing.mobileComponentGap}; padding: ${spacing.mobileComponentPad}; }
+  .section { margin-bottom: ${spacing.mobileSectionGap}; }
+}`;
+};
+
+// Spacing tokens for the desktop layout, keyed by layout feel.
+const DESKTOP_LAYOUT_SPACING: Record<
+  string,
+  {
+    maxWidth: string;
+    containerPad: string;
+    componentGap: string;
+    componentPad: string;
+    sectionGap: string;
+  }
+> = {
+  Compact: {
+    maxWidth: '1280px',
+    containerPad: '16px',
+    componentGap: '8px',
+    componentPad: '12px',
+    sectionGap: '12px',
+  },
+  Comfortable: {
+    maxWidth: '1440px',
+    containerPad: '24px',
+    componentGap: '16px',
+    componentPad: '24px',
+    sectionGap: '24px',
+  },
+  Spacious: {
+    maxWidth: '1600px',
+    containerPad: '32px',
+    componentGap: '24px',
+    componentPad: '32px',
+    sectionGap: '32px',
+  },
+};
+
+/**
+ * Desktop layout tokens: a fixed-height window shell with an overflow-hidden
+ * frame, a draggable title bar region (`-webkit-app-region`), and a scrollable
+ * content container. Used for Desktop platforms instead of the mobile or web
+ * shells.
+ */
+const getDesktopLayoutCSS = (layoutFeel: string): string => {
+  const spacing = DESKTOP_LAYOUT_SPACING[layoutFeel] ?? DESKTOP_LAYOUT_SPACING.Comfortable;
+
+  return `.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+.titlebar-drag-region {
+  -webkit-app-region: drag;
+  flex: 0 0 auto;
+  height: 32px;
+  user-select: none;
+}
+.container {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: ${spacing.maxWidth};
+  margin: 0 auto;
+  padding: 0 ${spacing.containerPad};
+  overflow-y: auto;
+}
+.component {
+  margin-bottom: ${spacing.componentGap};
+  padding: ${spacing.componentPad};
+}
+.section {
+  margin-bottom: ${spacing.sectionGap};
+}`;
+};
+
 // Layout CSS mappings
-const getLayoutCSS = (layoutFeel: string, appType?: string) => {
-  const isMobile = appType === 'Mobile App';
+const getLayoutCSS = (layoutFeel: string, platform?: string) => {
+  const canonicalPlatform = normalizePlatform(platform);
+
+  // Mobile gets the safe-area/full-width shell; Web gets responsive max-width
+  // wrappers; Desktop gets the fixed window shell. Unknown values keep the
+  // standard container rules.
+  if (canonicalPlatform === PLATFORM.MOBILE) {
+    return getMobileLayoutCSS(layoutFeel);
+  }
+  if (canonicalPlatform === PLATFORM.WEB) {
+    return getWebLayoutCSS(layoutFeel);
+  }
+  if (canonicalPlatform === PLATFORM.DESKTOP) {
+    return getDesktopLayoutCSS(layoutFeel);
+  }
 
   switch (layoutFeel) {
     case 'Compact':
-      return `.container { max-width: ${isMobile ? '90vw' : '1024px'}; margin: 0 auto; padding: 0 4px; }
+      return `.container { max-width: 1024px; margin: 0 auto; padding: 0 4px; }
 .component { margin-bottom: 4px; padding: 8px; }
 .section { margin-bottom: 8px; }`;
     case 'Comfortable':
-      return `.container { max-width: ${isMobile ? '95vw' : '1200px'}; margin: 0 auto; padding: 0 16px; }
+      return `.container { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
 .component { margin-bottom: 16px; padding: 24px; }
 .section { margin-bottom: 24px; }`;
     case 'Spacious':
-      return `.container { max-width: ${isMobile ? '100vw' : '1400px'}; margin: 0 auto; padding: 0 24px; }
+      return `.container { max-width: 1400px; margin: 0 auto; padding: 0 24px; }
 .component { margin-bottom: 24px; padding: 32px; }
 .section { margin-bottom: 32px; }`;
     default:
-      return `.container { max-width: ${isMobile ? '95vw' : '1200px'}; margin: 0 auto; padding: 0 16px; }
+      return `.container { max-width: 1200px; margin: 0 auto; padding: 0 16px; }
 .component { margin-bottom: 16px; padding: 24px; }
 .section { margin-bottom: 24px; }`;
   }
@@ -151,28 +350,31 @@ const PLATFORM_NOTES: Record<'mobile' | 'web' | 'desktop', string> = {
 
 - **Responsive Design**: Ensure layout works across screen sizes
 - **SEO**: Implement metadata, semantic HTML, and performance optimizations
-- **Accessibility**: WCAG compliance with keyboard navigation`,
+- **Web Accessibility**: WCAG compliance with keyboard navigation`,
   desktop: `### Desktop-Specific Notes
 
-- **Window Management**: Handle resizing, focus, and native menus if applicable
-- **Offline-First**: Consider local data storage and sync strategies
-- **Cross-Platform**: Ensure compatibility with target OS`,
+- **Window Management**: Handle resizing, focus, and multi-window layouts gracefully
+- **Native Menus**: Use OS-native menu bars, context menus, and keyboard shortcuts
+- **Offline-First Data Storage**: Persist data locally and sync when connectivity returns
+- **System Tray Integration**: Support tray icons, background running, and quick actions`,
 };
 
 /**
- * Maps the selected platform (e.g. "Web App", "Desktop") to its matching note
- * set. Matching is exclusive and order-sensitive, so selecting Web can never
- * also emit Desktop notes. Empty or unrecognised values yield no notes at all,
- * which lets the caller omit the whole section instead of leaving an empty
- * header behind.
+ * Maps the selected platform to its matching note set. Because the platform is
+ * canonicalized first, the match is exclusive: choosing Web can never also emit
+ * Desktop notes, and empty/unknown values yield no notes at all.
  */
 function getPlatformNotes(platform: string): string {
-  const value = platform.trim().toLowerCase();
-  if (!value || value === 'not specified') return '';
-  if (value.includes('mobile')) return PLATFORM_NOTES.mobile;
-  if (value.includes('desktop')) return PLATFORM_NOTES.desktop;
-  if (value.includes('web')) return PLATFORM_NOTES.web;
-  return '';
+  switch (normalizePlatform(platform)) {
+    case PLATFORM.MOBILE:
+      return PLATFORM_NOTES.mobile;
+    case PLATFORM.DESKTOP:
+      return PLATFORM_NOTES.desktop;
+    case PLATFORM.WEB:
+      return PLATFORM_NOTES.web;
+    default:
+      return '';
+  }
 }
 
 /**
@@ -205,9 +407,12 @@ export function compilePrompt(answers: AnswerMap): CompiledPrompt {
   const concept = formatValue(answers.concept);
   const persona = formatValue(answers.persona);
   // The wizard stores the selected platform in `target_platform`. Fall back to
-  // the legacy `app_type` answer for backward compatibility, then resolve it
-  // once so every platform-aware branch reads the exact same value.
-  const selectedPlatform = String(answers.target_platform || answers.app_type || '').trim();
+  // the legacy `app_type` answer for backward compatibility. Values are
+  // canonicalized once so every platform-aware branch reads the same value,
+  // regardless of whether the source used "Web"/"Web App" or "Desktop"/
+  // "Desktop App".
+  const selectedPlatform =
+    normalizePlatform(answers.target_platform) || normalizePlatform(answers.app_type);
   const platformLabel = selectedPlatform || 'Not specified';
   const platformNotes = getPlatformNotes(selectedPlatform);
   const platformNotesBlock = platformNotes ? `\n${platformNotes}\n` : '';
@@ -238,8 +443,10 @@ export function compilePrompt(answers: AnswerMap): CompiledPrompt {
     'Use TypeScript where possible for type safety',
     'Write clean, maintainable, and well-documented code',
     'Follow SOLID principles and established design patterns',
-    selectedPlatform === 'Mobile App' ? 'Optimize for touch interactions and mobile performance' : '',
-    selectedPlatform === 'Web App' ? 'Ensure responsive design and proper SEO' : '',
+    selectedPlatform === PLATFORM.MOBILE ? 'Optimize for touch interactions and mobile performance' : '',
+    selectedPlatform === PLATFORM.WEB ? 'Ensure responsive design and proper SEO' : '',
+    selectedPlatform === PLATFORM.WEB ? 'Ensure cross-browser compatibility and SEO best practices' : '',
+    selectedPlatform === PLATFORM.DESKTOP ? 'Optimize for desktop window management, keyboard shortcuts, and native OS conventions' : '',
     rawAccessibility
       ? `Meet ${rawAccessibility} accessibility standards`
       : 'Meet standard WCAG 2.1 AA accessibility guidelines',
