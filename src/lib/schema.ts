@@ -29,6 +29,26 @@ export enum InputCategory {
   TECHNICAL = 'TECHNICAL',
 }
 
+/** Friendly headings used to group related questions within a step. */
+export const CATEGORY_LABELS: Record<InputCategory, string> = {
+  [InputCategory.STRUCTURAL]: 'Project Foundations',
+  [InputCategory.FUNCTIONAL]: 'Core Functionality',
+  [InputCategory.DESIGN_VIBE]: 'Design Vibe',
+  [InputCategory.TECHNICAL]: 'Technical Setup',
+};
+
+/** Plain-language explanations of what each section controls. */
+export const CATEGORY_DESCRIPTIONS: Record<InputCategory, string> = {
+  [InputCategory.STRUCTURAL]:
+    'The basics that tell the AI what you are building and who it is for.',
+  [InputCategory.FUNCTIONAL]:
+    'How your app talks to data, handles sign-ins, and remembers what users do.',
+  [InputCategory.DESIGN_VIBE]:
+    'The look and feel of your app — colors, spacing, fonts, and how it responds to interaction.',
+  [InputCategory.TECHNICAL]:
+    'Where your app runs, what powers it, and how it gets deployed.',
+};
+
 export enum QuestionType {
   TEXT = 'TEXT',
   TEXTAREA = 'TEXTAREA',
@@ -41,6 +61,8 @@ export type QuestionOption = {
   label: string;
   icon?: string;
   description?: string;
+  /** Marks this option as a safe, sensible default for beginners. */
+  recommended?: boolean;
 };
 
 export type Question = {
@@ -52,6 +74,8 @@ export type Question = {
   placeholder?: string;
   type: QuestionType;
   options?: QuestionOption[];
+  /** Pre-selected value that gives beginners a smooth path forward. */
+  defaultValue?: string;
   required: boolean;
   weight: number;
   /** Keywords in the project description that trigger this dynamic probe */

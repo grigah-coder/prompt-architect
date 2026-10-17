@@ -11,7 +11,10 @@ export default function TextInput({ question, value, onChange }: Props) {
 
   return (
     <div className="mb-6">
-      <label className="block text-white mb-3 font-medium">{question.label}</label>
+      <label className="block text-white mb-1 font-medium">{question.label}</label>
+      {question.hint && (
+        <p className="text-sm text-slate-400 mb-3">{question.hint}</p>
+      )}
       {isTextarea ? (
         <textarea
           rows={4}

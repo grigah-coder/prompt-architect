@@ -10,6 +10,7 @@ interface SelectableCardProps {
   disabled?: boolean;
   icon?: LucideIcon;
   description?: string;
+  recommended?: boolean;
 }
 
 export default function SelectableCard({
@@ -19,7 +20,8 @@ export default function SelectableCard({
   onClick,
   disabled = false,
   icon: Icon,
-  description
+  description,
+  recommended = false
 }: SelectableCardProps) {
   return (
     <motion.button
@@ -35,6 +37,11 @@ export default function SelectableCard({
       animate={isSelected ? { scale: 1.05 } : { scale: 1 }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
     >
+      {recommended && (
+        <span className="absolute top-3 right-3 rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-300">
+          Recommended
+        </span>
+      )}
       <div className="text-center">
         {Icon && (
           <motion.div

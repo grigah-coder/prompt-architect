@@ -4,6 +4,19 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import StageRenderer from '../components/StageRenderer';
 import { WizardStep, AnswerMap, CompiledPrompt } from '../lib/schema';
+import { getDefaultAnswers } from '../lib/questions';
+
+const loadAnswersFromUrl = (): AnswerMap => {
+  if (typeof window === 'undefined') return {};
+  const sessionParam = new URLSearchParams(window.location.search).get('session');
+  if (!sessionParam) return {};
+  try {
+    return JSON.parse(atob(sessionParam));
+  } catch (error) {
+    console.warn('Failed to parse session from URL:', error);
+    return {};
+  }
+};
 
 type WizardState = {
   currentStep: WizardStep;
@@ -27,7 +40,10 @@ export default function Page() {
   console.log('Page component rendered');
   const [currentStep, setCurrentStep] = useState<WizardStep>(WizardStep.PROJECT_IDENTITY);
   const [viewState, setViewState] = useState<'form' | 'results'>('form');
-  const [answers, setAnswers] = useState<AnswerMap>({});
+  const [answers, setAnswers] = useState<AnswerMap>(() => ({
+    ...getDefaultAnswers(),
+    ...loadAnswersFromUrl(),
+  }));
   const [compiledPrompt, setCompiledPrompt] = useState<CompiledPrompt | null>(null);
   const [isCompiling, setIsCompiling] = useState(false);
 
@@ -35,20 +51,6 @@ export default function Page() {
   useEffect(() => {
     localStorage.setItem('pa_answers', JSON.stringify(answers));
   }, [answers]);
-
-  // Load answers from URL session param on mount
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const sessionParam = urlParams.get('session');
-    if (sessionParam) {
-      try {
-        const loadedAnswers: AnswerMap = JSON.parse(atob(sessionParam));
-        setAnswers(loadedAnswers);
-      } catch (error) {
-        console.warn('Failed to parse session from URL:', error);
-      }
-    }
-  }, []);
 
   const setAnswer = (id: string, value: string | string[]) => {
     setAnswers(prev => ({ ...prev, [id]: value }));
@@ -88,7 +90,7 @@ export default function Page() {
   const reset = () => {
     setCurrentStep(WizardStep.PROJECT_IDENTITY);
     setViewState('form');
-    setAnswers({});
+    setAnswers(getDefaultAnswers());
     setCompiledPrompt(null);
     setIsCompiling(false);
   };

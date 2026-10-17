@@ -1,15 +1,27 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { Copy, Download, Globe, Smartphone, Monitor } from 'lucide-react';
-import { WizardStep, AnswerMap, CompiledPrompt, QuestionType, STEP_HINTS, STEP_TITLES } from '../lib/schema';
+import { useEffect, useState, type ReactNode } from 'react';
+import { Copy, Download, Globe, Smartphone, Monitor, type LucideIcon } from 'lucide-react';
+import {
+  WizardStep,
+  AnswerMap,
+  CompiledPrompt,
+  QuestionType,
+  Question,
+  QuestionOption,
+  InputCategory,
+  STEP_HINTS,
+  STEP_TITLES,
+  CATEGORY_LABELS,
+  CATEGORY_DESCRIPTIONS,
+} from '../lib/schema';
 import { filterByStage, QUESTIONS } from '../lib/questions';
 import { compilePrompt } from '../lib/architect';
 import TextInput from './questions/TextInput';
 import SelectCard from './questions/SelectCard';
 import SelectableCard from './SelectableCard';
 import StepProgressBar from './StepProgressBar';
+import WizardFooter, { SECONDARY_BUTTON_CLASS, primaryButtonClass } from './WizardFooter';
 
 type WizardState = {
   currentStep: WizardStep;
@@ -35,7 +47,7 @@ interface Props {
   dispatch: (action: Action) => void;
 }
 
-const PLATFORM_ICONS: Record<string, any> = {
+const PLATFORM_ICONS: Record<string, LucideIcon> = {
   'Web App': Globe,
   'Mobile App': Smartphone,
   'Desktop': Monitor,
@@ -100,16 +112,19 @@ export default function StageRenderer({ step, state, dispatch }: Props) {
 
   const canNext = requiredUnanswered.length === 0;
 
-  const renderQuestion = (question: any) => {
+  const renderQuestion = (question: Question) => {
     const value = state.answers[question.id];
 
     if (question.type === QuestionType.SELECT && question.options) {
       if (step === WizardStep.PLATFORM_SELECTION && question.id === 'target_platform') {
         return (
           <div key={question.id} className="mb-12">
-            <h2 className="text-xl font-semibold text-white mb-6 text-center">{question.label}</h2>
+            <h2 className="text-xl font-semibold text-white mb-2 text-center">{question.label}</h2>
+            {question.hint && (
+              <p className="text-sm text-slate-400 mb-6 text-center max-w-2xl mx-auto">{question.hint}</p>
+            )}
             <div className="grid gap-4 grid-cols-1 md:grid-cols-3 max-w-6xl mx-auto">
-              {question.options.map((option: any) => {
+              {question.options.map((option: QuestionOption) => {
                 const isSelected = value === option.value;
                 const Icon = PLATFORM_ICONS[option.value] || Globe;
                 const description = PLATFORM_DESCRIPTIONS[option.value];
@@ -123,6 +138,7 @@ export default function StageRenderer({ step, state, dispatch }: Props) {
                     onClick={() => handleAnswerChange(question.id, option.value)}
                     icon={Icon}
                     description={description}
+                    recommended={option.recommended}
                   />
                 );
               })}
@@ -147,6 +163,28 @@ export default function StageRenderer({ step, state, dispatch }: Props) {
         </div>
       </div>
     );
+  };
+
+  // Renders the step's questions, inserting a descriptive section header each
+  // time the category changes so beginners understand what they are choosing.
+  const renderStepQuestions = () => {
+    const nodes: ReactNode[] = [];
+    let lastCategory: InputCategory | null = null;
+
+    stepQuestions.forEach((question) => {
+      if (question.category !== lastCategory) {
+        lastCategory = question.category;
+        nodes.push(
+          <div key={`section-${question.category}`} className="mb-6">
+            <h2 className="text-lg font-semibold text-emerald-300">{CATEGORY_LABELS[question.category]}</h2>
+            <p className="text-sm text-slate-400 mt-1 max-w-3xl">{CATEGORY_DESCRIPTIONS[question.category]}</p>
+          </div>
+        );
+      }
+      nodes.push(renderQuestion(question));
+    });
+
+    return nodes;
   };
 
   // Results / Export Prompt view
@@ -211,33 +249,37 @@ export default function StageRenderer({ step, state, dispatch }: Props) {
             </div>
           </div>
         )}
-        <div className="flex flex-col sm:flex-row justify-between gap-3 mt-6">
-          <button
-            onClick={() => dispatch({ type: 'PREV_STEP' })}
-            className="bg-slate-700 border border-slate-600 text-slate-200 px-6 py-3 rounded-xl hover:bg-slate-600 transition-colors"
-          >
-            Back to UI/UX Specs
-          </button>
-          <div className="flex flex-col sm:flex-row gap-3">
+        <WizardFooter
+          back={
             <button
-              onClick={() => {
-                const encoded = btoa(JSON.stringify(state.answers));
-                const newUrl = `${window.location.pathname}?session=${encoded}`;
-                window.history.replaceState(null, '', newUrl);
-                navigator.clipboard.writeText(window.location.href);
-              }}
-              className="bg-slate-700 border border-slate-600 text-slate-200 px-6 py-3 rounded-xl hover:bg-slate-600 transition-colors"
+              onClick={() => dispatch({ type: 'PREV_STEP' })}
+              className={SECONDARY_BUTTON_CLASS}
             >
-              Copy Share Link
+              Back to UI/UX Specs
             </button>
-            <button
-              onClick={() => dispatch({ type: 'RESET' })}
-              className="bg-slate-700 border border-slate-600 text-slate-200 px-6 py-3 rounded-xl hover:bg-slate-600 transition-colors"
-            >
-              Start Over
-            </button>
-          </div>
-        </div>
+          }
+          next={
+            <>
+              <button
+                onClick={() => {
+                  const encoded = btoa(JSON.stringify(state.answers));
+                  const newUrl = `${window.location.pathname}?session=${encoded}`;
+                  window.history.replaceState(null, '', newUrl);
+                  navigator.clipboard.writeText(window.location.href);
+                }}
+                className={SECONDARY_BUTTON_CLASS}
+              >
+                Copy Share Link
+              </button>
+              <button
+                onClick={() => dispatch({ type: 'RESET' })}
+                className={SECONDARY_BUTTON_CLASS}
+              >
+                Start Over
+              </button>
+            </>
+          }
+        />
       </div>
     );
   }
@@ -250,7 +292,7 @@ export default function StageRenderer({ step, state, dispatch }: Props) {
       <p className="text-slate-400 text-center mb-8 max-w-3xl mx-auto">{STEP_HINTS[step]}</p>
 
       <div className="max-w-6xl mx-auto px-4">
-        {stepQuestions.map((question) => renderQuestion(question))}
+        {renderStepQuestions()}
       </div>
 
       {stepQuestions.length === 0 && (
@@ -259,25 +301,27 @@ export default function StageRenderer({ step, state, dispatch }: Props) {
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row justify-between gap-3 mt-8 max-w-6xl mx-auto px-4">
-        {step > WizardStep.PROJECT_IDENTITY && (
+      <WizardFooter
+        back={
           <button
             onClick={() => dispatch({ type: 'PREV_STEP' })}
-            className="bg-slate-700 border border-slate-600 text-slate-200 px-6 py-3 rounded-xl hover:bg-slate-600 transition-colors"
+            disabled={step === WizardStep.PROJECT_IDENTITY}
+            className={SECONDARY_BUTTON_CLASS}
           >
             Back
           </button>
-        )}
-        <button
-          onClick={() => dispatch({ type: 'NEXT_STEP' })}
-          disabled={!canNext}
-          className={`px-8 py-3 rounded-xl transition-opacity ${
-            canNext ? 'btn-accent text-white hover:opacity-90' : 'bg-slate-700 text-slate-400 cursor-not-allowed'
-          }`}
-        >
-          {step === WizardStep.UI_UX_SPECS ? 'Export Prompt' : 'Next'}
-        </button>
-      </div>
+        }
+        next={
+          <button
+            onClick={() => dispatch({ type: 'NEXT_STEP' })}
+            disabled={!canNext}
+            title={!canNext ? 'Answer the required questions to continue' : undefined}
+            className={primaryButtonClass(canNext)}
+          >
+            {step === WizardStep.UI_UX_SPECS ? 'Export Prompt' : 'Next'}
+          </button>
+        }
+      />
     </div>
   );
 }
