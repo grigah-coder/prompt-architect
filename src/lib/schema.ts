@@ -1,0 +1,126 @@
+export enum WizardStep {
+  PROJECT_IDENTITY = 1,
+  FUNCTIONAL_SPEC = 2,
+  PLATFORM_SELECTION = 3,
+  UI_UX_SPECS = 4,
+  PROMPT_OUTPUT = 5,
+}
+
+export const STEP_TITLES: Record<WizardStep, string> = {
+  [WizardStep.PROJECT_IDENTITY]: 'Project Identity',
+  [WizardStep.FUNCTIONAL_SPEC]: 'Functional QA',
+  [WizardStep.PLATFORM_SELECTION]: 'Target Platform',
+  [WizardStep.UI_UX_SPECS]: 'UI/UX Specs',
+  [WizardStep.PROMPT_OUTPUT]: 'Export Prompt',
+};
+
+export const STEP_HINTS: Record<WizardStep, string> = {
+  [WizardStep.PROJECT_IDENTITY]: 'Name your project and describe what it does. Your description drives the functional probing questions in the next step.',
+  [WizardStep.FUNCTIONAL_SPEC]: 'Answer the probing questions that apply to your project. These are generated dynamically from your description.',
+  [WizardStep.PLATFORM_SELECTION]: 'Choose your target platform. Platform-specific follow-up questions will appear once you select one.',
+  [WizardStep.UI_UX_SPECS]: 'Define the look, feel, and interaction model of your application.',
+  [WizardStep.PROMPT_OUTPUT]: 'Your structured blueprint is ready. Copy the system prompt for Claude Code or Kilo CLI.',
+};
+
+export enum InputCategory {
+  STRUCTURAL = 'STRUCTURAL',
+  FUNCTIONAL = 'FUNCTIONAL',
+  DESIGN_VIBE = 'DESIGN_VIBE',
+  TECHNICAL = 'TECHNICAL',
+}
+
+export enum QuestionType {
+  TEXT = 'TEXT',
+  TEXTAREA = 'TEXTAREA',
+  SELECT = 'SELECT',
+  MULTI_SELECT = 'MULTI_SELECT',
+}
+
+export type QuestionOption = {
+  value: string;
+  label: string;
+  icon?: string;
+  description?: string;
+};
+
+export type Question = {
+  id: string;
+  category: InputCategory;
+  stage: WizardStep;
+  label: string;
+  hint?: string;
+  placeholder?: string;
+  type: QuestionType;
+  options?: QuestionOption[];
+  required: boolean;
+  weight: number;
+  /** Keywords in the project description that trigger this dynamic probe */
+  probes?: string[];
+  /** Target platform this dynamic probe applies to */
+  platform?: string;
+  dynamic?: boolean;
+};
+
+export type AnswerMap = Record<string, string | string[]>;
+
+export type WizardProgress = {
+  step: WizardStep;
+  totalSteps: number;
+  completed: number;
+  percentage: number;
+};
+
+export type NormalizedInput = {
+  project_name?: string;
+  rawIdea: string;
+  system_persona?: string;
+  target_platform?: string;
+  app_type?: string;
+  app_vibe?: string;
+  color_style?: string;
+  layout_feel?: string;
+  typography_style?: string;
+  interaction_style?: string;
+  visual_hierarchy?: string;
+  infrastructure?: string;
+  data_flow?: string;
+  auth_strategy?: string;
+  state_management?: string;
+  accessibility?: string;
+};
+
+export type CompiledPrompt = {
+  markdown: string;
+  systemPrompt: string;
+  metaJSON: {
+    role: string;
+    context: string;
+    constraints: string[];
+    style: {
+      tone: string;
+      format: string[];
+      density: string;
+    };
+  };
+};
+
+export function normalizeAnswers(answers: AnswerMap): NormalizedInput {
+  return {
+    project_name: answers.project_name as string,
+    rawIdea: (answers.concept as string) || (answers.project_name as string) || 'Build an application',
+    system_persona: answers.persona as string,
+    target_platform: answers.target_platform as string,
+    app_type: answers.app_type as string,
+    app_vibe: answers.app_vibe as string,
+    color_style: answers.color_style as string,
+    layout_feel: answers.layout_feel as string,
+    typography_style: answers.typography_style as string,
+    interaction_style: answers.interaction_style as string,
+    visual_hierarchy: answers.visual_hierarchy as string,
+    infrastructure: answers.infrastructure as string,
+    data_flow: answers.data_flow as string,
+    auth_strategy: answers.auth_strategy as string,
+    state_management: answers.state_management as string,
+    accessibility: answers.accessibility as string,
+  };
+}
