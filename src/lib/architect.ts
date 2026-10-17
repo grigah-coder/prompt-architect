@@ -48,9 +48,9 @@ const getColorPalette = (colorStyle: string) => {
 
 // Project Signature generator
 const getProjectSignature = (appType?: string, appVibe?: string, colorStyle?: string): string => {
-  const type = appType || 'Web App';
-  const vibe = appVibe || 'Minimal';
-  const color = colorStyle || 'Dark';
+  const type = cleanValue(appType) || 'Web App';
+  const vibe = cleanValue(appVibe) || 'Minimal';
+  const color = cleanValue(colorStyle) || 'Dark';
 
   const vibeDescriptors: Record<string, string> = {
     'Minimal': 'Air',
@@ -116,12 +116,101 @@ function ynValue(value: string | string[] | undefined): string {
   return v === 'yes' ? 'Yes' : v === 'no' ? 'No' : String(value);
 }
 
+/**
+ * Normalizes an answer into a usable string, treating undefined, empty,
+ * whitespace-only, and the "Not specified" placeholder as missing (returns '').
+ * This prevents placeholder text from leaking into generated prose such as
+ * "Meet Not specified accessibility standards".
+ */
+function cleanValue(value: string | string[] | undefined): string {
+  if (Array.isArray(value)) {
+    const joined = value
+      .map((entry) => String(entry).trim())
+      .filter((entry) => entry.length > 0)
+      .join(', ');
+    return joined.toLowerCase() === 'not specified' ? '' : joined;
+  }
+  const trimmed = String(value ?? '').trim();
+  if (!trimmed || trimmed.toLowerCase() === 'not specified') return '';
+  return trimmed;
+}
+
+// Matches an existing Markdown bullet ("-", "*", "+", "•") or an ordered marker
+// ("1.", "1)") so pasted lists are not double-prefixed.
+const BULLET_PREFIX = /^\s*(?:[-*+•‣◦]|\d+[.)])\s+/;
+
+// Platform-specific guidance. Resolved exclusively so exactly one set can ever
+// be emitted for a given platform selection.
+const PLATFORM_NOTES: Record<'mobile' | 'web' | 'desktop', string> = {
+  mobile: `### Mobile-Specific Notes
+
+- **Touch Interactions**: Prioritize touch-optimized UI with proper hit targets
+- **Native Feel**: Follow platform conventions (iOS HIG, Material Design)
+- **Performance**: Optimize for mobile devices (bundle size, memory)`,
+  web: `### Web-Specific Notes
+
+- **Responsive Design**: Ensure layout works across screen sizes
+- **SEO**: Implement metadata, semantic HTML, and performance optimizations
+- **Accessibility**: WCAG compliance with keyboard navigation`,
+  desktop: `### Desktop-Specific Notes
+
+- **Window Management**: Handle resizing, focus, and native menus if applicable
+- **Offline-First**: Consider local data storage and sync strategies
+- **Cross-Platform**: Ensure compatibility with target OS`,
+};
+
+/**
+ * Maps the selected platform (e.g. "Web App", "Desktop") to its matching note
+ * set. Matching is exclusive and order-sensitive, so selecting Web can never
+ * also emit Desktop notes. Empty or unrecognised values yield no notes at all,
+ * which lets the caller omit the whole section instead of leaving an empty
+ * header behind.
+ */
+function getPlatformNotes(platform: string): string {
+  const value = platform.trim().toLowerCase();
+  if (!value || value === 'not specified') return '';
+  if (value.includes('mobile')) return PLATFORM_NOTES.mobile;
+  if (value.includes('desktop')) return PLATFORM_NOTES.desktop;
+  if (value.includes('web')) return PLATFORM_NOTES.web;
+  return '';
+}
+
+/**
+ * Normalizes a free-form requirements answer into a Markdown bullet list.
+ *
+ * Textarea answers arrive as multiple lines (often already prefixed with "-",
+ * "*", or "1."). Each non-empty line becomes its own `- Item` bullet so the
+ * content keeps its line breaks instead of collapsing into a single line.
+ */
+function formatRequirementList(
+  value: string | string[] | undefined,
+  indent = '',
+): string {
+  const lines = Array.isArray(value)
+    ? value
+    : value === undefined
+      ? []
+      : String(value).split(/\r?\n/);
+
+  const items = lines
+    .map((line) => line.replace(BULLET_PREFIX, '').trim())
+    .filter((line) => line.length > 0);
+
+  if (items.length === 0) return `${indent}- Not specified`;
+  return items.map((item) => `${indent}- ${item}`).join('\n');
+}
+
 export function compilePrompt(answers: AnswerMap): CompiledPrompt {
   const projectName = formatValue(answers.project_name) || 'Untitled Project';
   const concept = formatValue(answers.concept);
   const persona = formatValue(answers.persona);
-  const appType = formatValue(answers.app_type);
-  const targetPlatform = formatValue(answers.target_platform);
+  // The wizard stores the selected platform in `target_platform`. Fall back to
+  // the legacy `app_type` answer for backward compatibility, then resolve it
+  // once so every platform-aware branch reads the exact same value.
+  const selectedPlatform = String(answers.target_platform || answers.app_type || '').trim();
+  const platformLabel = selectedPlatform || 'Not specified';
+  const platformNotes = getPlatformNotes(selectedPlatform);
+  const platformNotesBlock = platformNotes ? `\n${platformNotes}\n` : '';
   const colorStyle = formatValue(answers.color_style);
   const layoutFeel = formatValue(answers.layout_feel);
   const appVibe = formatValue(answers.app_vibe);
@@ -133,11 +222,29 @@ export function compilePrompt(answers: AnswerMap): CompiledPrompt {
   const authStrategy = formatValue(answers.auth_strategy);
   const stateManagement = formatValue(answers.state_management);
   const accessibility = formatValue(answers.accessibility);
-  const functionalNotes = formatValue(answers.functional_notes);
+  const rawAccessibility = cleanValue(answers.accessibility);
+  const functionalNotes = formatRequirementList(answers.functional_notes, '  ');
 
   const colors = getColorPalette(String(colorStyle));
-  const layoutCSS = getLayoutCSS(String(layoutFeel), String(appType) || String(targetPlatform));
-  const signature = getProjectSignature(String(appType) || String(targetPlatform), String(appVibe), String(colorStyle));
+  const layoutCSS = getLayoutCSS(String(layoutFeel), selectedPlatform);
+  const signature = getProjectSignature(selectedPlatform, String(appVibe), String(colorStyle));
+
+  // Constraint items are collected first so empty/placeholder entries can be
+  // filtered out before rendering, avoiding stray "- " bullets in the output.
+  const constraints: string[] = [
+    'Follow the design system and UI/UX specifications exactly',
+    `Adhere to the chosen platform conventions (${selectedPlatform || 'the target platform'})`,
+    'Implement secure, accessible, and performant code',
+    'Use TypeScript where possible for type safety',
+    'Write clean, maintainable, and well-documented code',
+    'Follow SOLID principles and established design patterns',
+    selectedPlatform === 'Mobile App' ? 'Optimize for touch interactions and mobile performance' : '',
+    selectedPlatform === 'Web App' ? 'Ensure responsive design and proper SEO' : '',
+    rawAccessibility
+      ? `Meet ${rawAccessibility} accessibility standards`
+      : 'Meet standard WCAG 2.1 AA accessibility guidelines',
+  ].filter((item) => item.trim() !== '');
+  const constraintsList = constraints.map((item) => `- ${item}`).join('\n');
 
   const systemPrompt = `# Project Blueprint: ${projectName}
 
@@ -151,7 +258,8 @@ Generated by Prompt Architect for Claude Code / Kilo CLI
 
 ## 2. Functional Specification
 
-- **Core Requirements**: ${functionalNotes}
+- **Core Requirements**:
+${functionalNotes}
 - **Data Flow**: ${dataFlow}
 - **Authentication Strategy**: ${authStrategy}
 - **State Management**: ${stateManagement}
@@ -175,14 +283,10 @@ Generated by Prompt Architect for Claude Code / Kilo CLI
 
 ## 3. Target Platform
 
-- **Platform**: ${appType || targetPlatform}
+- **Platform**: ${platformLabel}
 - **Platform Details**: ${formatValue(answers.platform_detail)}
 - **Infrastructure / Deployment**: ${infrastructure}
-
-${appType === 'Mobile App' || String(targetPlatform).includes('Mobile') ? '### Mobile-Specific Notes\n\n- **Touch Interactions**: Prioritize touch-optimized UI with proper hit targets\n- **Native Feel**: Follow platform conventions (iOS HIG, Material Design)\n- **Performance**: Optimize for mobile devices (bundle size, memory)\n' : ''}
-${appType === 'Web App' || String(targetPlatform).includes('Web') ? '### Web-Specific Notes\n\n- **Responsive Design**: Ensure layout works across screen sizes\n- **SEO**: Implement metadata, semantic HTML, and performance optimizations\n- **Accessibility**: WCAG compliance with keyboard navigation\n' : ''}
-${appType === 'Desktop' || String(targetPlatform).includes('Desktop') ? '### Desktop-Specific Notes\n\n- **Window Management**: Handle resizing, focus, and native menus if applicable\n- **Offline-First**: Consider local data storage and sync strategies\n- **Cross-Platform**: Ensure compatibility with target OS\n' : ''}
-
+${platformNotesBlock}
 ## 4. UI/UX Specification
 
 - **App Vibe**: ${appVibe}
@@ -220,7 +324,7 @@ ${layoutCSS}
 - **Layout Feel**: ${layoutFeel}
 - **Visual Hierarchy**: ${visualHierarchy}
 - **Interaction Style**: ${interactionStyle}
-- **Accessibility Target**: ${accessibility || 'WCAG 2.1 AA'}
+- **Accessibility Target**: ${rawAccessibility || 'WCAG 2.1 AA'}
 
 ## 5. System Prompt for Claude Code / Kilo CLI
 
@@ -236,15 +340,7 @@ Description: ${concept}
 
 ### Constraints
 
-- Follow the design system and UI/UX specifications exactly
-- Adhere to the chosen platform conventions (${appType || targetPlatform})
-- Implement secure, accessible, and performant code
-- Use TypeScript where possible for type safety
-- Write clean, maintainable, and well-documented code
-- Follow SOLID principles and established design patterns
-- ${appType === 'Mobile App' ? 'Optimize for touch interactions and mobile performance' : ''}
-- ${appType === 'Web App' ? 'Ensure responsive design and proper SEO' : ''}
-- ${accessibility ? `Meet ${accessibility} accessibility standards` : 'Follow WCAG 2.1 AA accessibility standards'}
+${constraintsList}
 
 ### Implementation Requirements
 
@@ -279,11 +375,11 @@ ${signature}
       role: 'Software Architect',
       context: concept,
       constraints: [
-        `Follow ${appType || targetPlatform} conventions`,
-        `Adhere to ${accessibility || 'WCAG 2.1 AA'} accessibility standards`,
+        `Follow ${selectedPlatform || 'the target platform'} conventions`,
+        `Adhere to ${rawAccessibility || 'WCAG 2.1 AA'} accessibility standards`,
         'Maintain consistent UI/UX with the defined design system',
         'Implement secure and performant code',
-      ],
+      ].filter((item) => item.trim() !== ''),
       style: {
         tone: 'professional',
         format: ['markdown'],
